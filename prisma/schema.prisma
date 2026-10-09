@@ -29,8 +29,9 @@ model User {
   pages   Page[]
   rules   Rule[]
   logs    ReplyLog[]
-  tickets Ticket[]
-  events  SystemEvent[]
+  tickets  Ticket[]
+  events   SystemEvent[]
+  payments Payment[]
 }
 
 model Page {
@@ -147,4 +148,28 @@ model TicketMessage {
   createdAt DateTime @default(now())
 
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+// كل عملية دفع (محلية عبر Plutu، أو تحويل يدوي، أو Stripe)
+model Payment {
+  id            String    @id @default(cuid())
+  userId        String
+  plan          String
+  months        Int       @default(1)
+  amount        Float
+  currency      String    @default("LYD")
+  provider      String // sadad | edfali | cards | manual | stripe
+  status        String    @default("pending") // pending | paid | failed | canceled
+  invoiceNo     String    @unique
+  processId     String?
+  transactionId String?
+  mobile        String?
+  reference     String? // رقم العملية الذي يكتبه العميل في التحويل اليدوي
+  error         String?
+  createdAt     DateTime  @default(now())
+  paidAt        DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
 }

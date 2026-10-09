@@ -42,10 +42,24 @@ npm run dev               # http://localhost:3000
 
 ## الدفع
 
-- **Stripe** (اختياري): ضع `STRIPE_SECRET_KEY` و `STRIPE_WEBHOOK_SECRET` ومعرفات الأسعار، وسجّل Webhook على `/api/webhooks/stripe` للأحداث `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`.
-- **تحويل بنكي/محفظة**: العميل يرسل رقم العملية، فيظهر طلبه في لوحة الإدارة وتفعّل اشتراكه يدوياً.
+الأسعار بالدينار الليبي في `src/lib/plans.ts` (`priceLyd`)، مع مدد مسبقة الدفع: شهر، 3 أشهر (خصم 5%)، 6 أشهر (10%)، سنة (20%). التجديد يُضاف لنهاية الاشتراك الحالي.
+
+### الدفع المحلي عبر Plutu (ليبيا)
+[Plutu](https://plutu.ly) بوابة واحدة تجمع:
+- **سداد**: رقم المدار (091/093) + سنة الميلاد ← رمز تحقق من 6 أرقام.
+- **إدفع لي**: رقم الهاتف ← رمز تحقق من 4 أرقام.
+- **البطاقات المصرفية المحلية**: تحويل لصفحة الدفع ثم العودة إلى `/api/payments/plutu/return` مع نتيجة موقّعة (HMAC-SHA256) يتم التحقق منها ومن المبلغ.
+
+الإعداد: افتح حساب تاجر لدى Plutu (يتطلب سجلاً تجارياً ليبياً)، ثم ضع `PLUTU_API_KEY` و `PLUTU_ACCESS_TOKEN` و `PLUTU_SECRET_KEY`، وحدد الطرق المفعلة لديك في `PLUTU_METHODS`.
+بدون مفاتيح ومع `DEMO_MODE="true"` تعمل محاكاة كاملة (رمز التحقق `123456` لسداد و `1234` لإدفع لي).
+
+### تحويل يدوي / إيداع / محفظة
+العميل يرسل رقم العملية، فتظهر الدفعة في **الإدارة ← المدفوعات** لتأكيدها أو رفضها. بيانات الحساب في `BANK_TRANSFER_INFO`.
+
+### Stripe (اختياري، للبطاقات الدولية)
+ضع `STRIPE_SECRET_KEY` و `STRIPE_WEBHOOK_SECRET` ومعرفات الأسعار، وسجّل Webhook على `/api/webhooks/stripe` للأحداث `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`.
+
 - **تجربة مجانية**: `TRIAL_DAYS` (افتراضياً 7 أيام، بحدود مخففة).
-- الباقات وحدودها في `src/lib/plans.ts`.
 
 ## الردود المؤجلة (خيار «تأخير الرد»)
 

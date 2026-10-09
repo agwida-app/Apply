@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { Avatar, Badge, LOG_STATUS, PageHeader, PlatformIcon, SKIP_REASON, Stat, TICKET_STATUS, fmtDate } from "@/components/ui";
 import { db } from "@/lib/db";
 import { startOfMonth } from "@/lib/engine";
-import { PLANS, PlanId, SUB_STATUS_LABEL, hasActiveSubscription, limitsFor } from "@/lib/plans";
+import { PLANS, PlanId, SUB_STATUS_LABEL, formatLyd, hasActiveSubscription, limitsFor } from "@/lib/plans";
+import { PROVIDER_LABEL } from "@/lib/billing";
 import { activateSubscription, cancelSubscription, extendTrial, impersonate, messageClient, retryLog, saveNote, toggleSuspend } from "../../../actions";
 
 export default async function ClientDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -15,6 +16,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
       rules: { include: { page: true }, orderBy: { createdAt: "desc" } },
       tickets: { orderBy: { updatedAt: "desc" }, take: 10 },
       events: { orderBy: { createdAt: "desc" }, take: 15 },
+      payments: { orderBy: { createdAt: "desc" }, take: 10 },
     },
   });
   if (!u) notFound();
@@ -153,6 +155,16 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
               <li key={t.id} className="flex justify-between gap-2"><Link href={`/admin/tickets/${t.id}`} className="truncate text-brand-600 hover:underline">{t.subject}</Link><Badge tone={TICKET_STATUS[t.status]?.tone}>{TICKET_STATUS[t.status]?.label}</Badge></li>
             ))}
             {u.tickets.length === 0 && <li className="muted">لا يوجد</li>}
+          </ul>
+          <div className="mb-3 mt-6 font-extrabold">المدفوعات <Link href="/admin/payments?t=all" className="text-xs text-brand-600">(الكل)</Link></div>
+          <ul className="space-y-2 text-sm">
+            {u.payments.map((p) => (
+              <li key={p.id} className="flex justify-between gap-2">
+                <span>{formatLyd(p.amount)} · {PROVIDER_LABEL[p.provider] ?? p.provider} · {p.months} شهر <span className="faint text-xs">{fmtDate(p.createdAt)}</span></span>
+                <Badge tone={p.status === "paid" ? "green" : p.status === "pending" ? "amber" : "red"}>{p.status === "paid" ? "مدفوع" : p.status === "pending" ? "معلّق" : p.status === "failed" ? "فشل" : "ملغى"}</Badge>
+              </li>
+            ))}
+            {u.payments.length === 0 && <li className="muted">لا يوجد</li>}
           </ul>
         </div>
       </div>

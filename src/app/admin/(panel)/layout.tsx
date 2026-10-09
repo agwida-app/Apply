@@ -5,15 +5,17 @@ import { adminLogout } from "../actions";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   await requireAdmin();
-  const [tickets, errors] = await Promise.all([
+  const [tickets, errors, pendingPayments] = await Promise.all([
     db.ticket.count({ where: { unreadByAdmin: true, status: { not: "closed" } } }),
     db.systemEvent.count({ where: { resolved: false, level: { in: ["error", "warn"] } } }),
+    db.payment.count({ where: { provider: "manual", status: "pending" } }),
   ]);
   return (
     <Shell brand="ردّ · الإدارة"
       nav={[
         { href: "/admin", label: "نظرة عامة", icon: "📊" },
         { href: "/admin/clients", label: "العملاء", icon: "👥" },
+        { href: "/admin/payments", label: "المدفوعات", icon: "💰", badge: pendingPayments },
         { href: "/admin/events", label: "المشاكل والتنبيهات", icon: "🚨", badge: errors },
         { href: "/admin/tickets", label: "رسائل الدعم", icon: "✉️", badge: tickets },
       ]}

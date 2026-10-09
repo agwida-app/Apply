@@ -7,7 +7,8 @@ import { decrypt, encrypt } from "@/lib/crypto";
 import { handleIncomingComment } from "@/lib/engine";
 import { logEvent } from "@/lib/events";
 import { findPostByUrl, getManagedAccounts, listPosts, MetaError, Post, subscribePage, unsubscribePage } from "@/lib/meta";
-import { hasActiveSubscription, limitsFor, PLANS, PlanId } from "@/lib/plans";
+import { DURATIONS, hasActiveSubscription, limitsFor, PLANS, PlanId, priceLydFor } from "@/lib/plans";
+import { newInvoiceNo } from "@/lib/billing";
 import { requireUser } from "@/lib/session";
 import { priceFor, stripe, stripeEnabled } from "@/lib/stripe";
 
@@ -222,10 +223,13 @@ export async function startCheckout(form: FormData) {
 export async function requestManualPayment(form: FormData) {
   const user = await requireUser();
   const plan = String(form.get("plan")) as PlanId;
-  if (!PLANS[plan]) return;
+  const months = Number(form.get("months")) || 1;
+  if (!PLANS[plan] || !DURATIONS.some((d) => d.months === months)) return;
   const ref = String(form.get("ref") ?? "").trim().slice(0, 200);
-  // لا نُلغي تجربة/اشتراك نشط: نسجّل الطلب فقط وتقوم الإدارة بالتفعيل
+  const amount = priceLydFor(plan, months);
+  await db.payment.create({ data: { userId: user.id, plan, months, amount, provider: "manual", invoiceNo: newInvoiceNo(), reference: ref || null } });
+  // لا نُلغي تجربة/اشتراك نشط: الطلب يظهر في الإدارة لتأكيده
   if (!hasActiveSubscription(user)) await db.user.update({ where: { id: user.id }, data: { subscriptionStatus: "pending", plan } });
-  await logEvent("warn", "billing", `طلب تفعيل باقة ${PLANS[plan].name} بتحويل بنكي. المرجع: ${ref || "—"}`, user.id);
+  await logEvent("warn", "billing", `طلب تفعيل باقة ${PLANS[plan].name} (${months} شهر - ${amount} د.ل) بتحويل يدوي. المرجع: ${ref || "—"}`, user.id);
   redirect("/dashboard/billing?requested=1");
 }

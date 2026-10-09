@@ -83,7 +83,8 @@ export default function Home() {
       </section>
 
       <section id="pricing" className="mx-auto max-w-6xl px-4 py-12">
-        <h2 className="mb-8 text-center text-3xl font-extrabold">الأسعار</h2>
+        <h2 className="mb-2 text-center text-3xl font-extrabold">الأسعار</h2>
+        <p className="muted mb-8 text-center">ادفع بسداد، إدفع لي، البطاقات المصرفية المحلية أو التحويل — وخصم حتى 20% عند الاشتراك السنوي</p>
         <div className="grid gap-4 md:grid-cols-3">
           {(Object.keys(PLANS) as PlanId[]).map((id) => {
             const p = PLANS[id];
@@ -92,7 +93,7 @@ export default function Home() {
               <div key={id} className={`card flex flex-col ${featured ? "ring-2 ring-brand-600" : ""}`}>
                 {featured && <span className="badge mb-3 w-fit bg-brand-600 text-white">الأكثر طلباً</span>}
                 <div className="text-lg font-extrabold">{p.name}</div>
-                <div className="mt-2 text-4xl font-extrabold">${p.price}<span className="muted text-base font-medium"> / شهرياً</span></div>
+                <div className="mt-2 text-4xl font-extrabold">{p.priceLyd} <span className="text-2xl">د.ل</span><span className="muted text-base font-medium"> / شهرياً</span></div>
                 <ul className="mt-5 flex-1 space-y-2 text-sm">
                   {p.features.map((f) => <li key={f}>✓ {f}</li>)}
                 </ul>

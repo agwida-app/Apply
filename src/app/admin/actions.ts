@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { logEvent } from "@/lib/events";
 import { PLANS, PlanId } from "@/lib/plans";
+import { activatePlan, markPaymentPaid } from "@/lib/billing";
 import { clearSession, requireAdmin, setSession } from "@/lib/session";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
@@ -15,11 +16,7 @@ export async function activateSubscription(f: FormData) {
   const plan = str(f, "plan") as PlanId;
   const months = Math.max(1, Math.min(24, Number(str(f, "months")) || 1));
   if (!PLANS[plan]) return;
-  const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
-  // التمديد يبدأ من نهاية الاشتراك الحالي إن كان سارياً
-  const base = user.subscriptionStatus === "active" && user.subscriptionEndsAt && user.subscriptionEndsAt > new Date() ? user.subscriptionEndsAt : new Date();
-  const ends = new Date(base); ends.setMonth(ends.getMonth() + months);
-  await db.user.update({ where: { id: userId }, data: { plan, subscriptionStatus: "active", subscriptionEndsAt: ends } });
+  await activatePlan(userId, plan, months);
   await db.systemEvent.updateMany({ where: { userId, source: "billing", resolved: false }, data: { resolved: true } });
   await logEvent("info", "admin", `تفعيل باقة ${PLANS[plan].name} لمدة ${months} شهر`, userId);
   done(userId);
@@ -114,4 +111,24 @@ export async function impersonate(f: FormData) {
 export async function adminLogout() {
   await clearSession();
   redirect("/admin/login");
+}
+
+/** تأكيد دفعة يدوية (تحويل بنكي) أو دفعة محلية علقت: يفعّل الاشتراك */
+export async function confirmPayment(f: FormData) {
+  await requireAdmin();
+  const id = str(f, "id");
+  const p = await db.payment.findUniqueOrThrow({ where: { id } });
+  await markPaymentPaid(id, str(f, "tx") || p.transactionId);
+  await db.systemEvent.updateMany({ where: { userId: p.userId, source: "billing", resolved: false }, data: { resolved: true } });
+  done(p.userId);
+}
+
+export async function rejectPayment(f: FormData) {
+  await requireAdmin();
+  const id = str(f, "id");
+  const p = await db.payment.update({ where: { id }, data: { status: "canceled", error: str(f, "reason").slice(0, 300) || "رفض من الإدارة" } });
+  const user = await db.user.findUniqueOrThrow({ where: { id: p.userId } });
+  if (user.subscriptionStatus === "pending") await db.user.update({ where: { id: user.id }, data: { subscriptionStatus: "none" } });
+  await logEvent("warn", "admin", `رفض دفعة ${p.invoiceNo}`, p.userId);
+  done(p.userId);
 }
