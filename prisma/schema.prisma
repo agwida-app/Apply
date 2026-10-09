@@ -1,0 +1,150 @@
+// قاعدة البيانات: SQLite للتطوير، غيّر provider إلى "postgresql" للإنتاج.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  fbUserId           String    @unique
+  name               String
+  email              String?
+  phone              String?
+  avatarUrl          String?
+  fbUserToken        String? // مشفّر
+  status             String    @default("active") // active | suspended
+  plan               String? // starter | pro | business
+  subscriptionStatus String    @default("none") // none | trialing | active | pending | past_due | canceled
+  subscriptionEndsAt DateTime?
+  stripeCustomerId   String?
+  adminNote          String?
+  isDemo             Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  lastLoginAt        DateTime  @default(now())
+
+  pages   Page[]
+  rules   Rule[]
+  logs    ReplyLog[]
+  tickets Ticket[]
+  events  SystemEvent[]
+}
+
+model Page {
+  id          String   @id @default(cuid())
+  userId      String
+  platform    String // facebook | instagram
+  externalId  String // Facebook Page ID أو Instagram Business ID
+  fbPageId    String // صفحة فيسبوك المرتبطة (لإنستغرام: الصفحة الأم)
+  name        String
+  pictureUrl  String?
+  accessToken String // Page Access Token مشفّر
+  active      Boolean  @default(true)
+  health      String   @default("ok") // ok | error
+  lastError   String?
+  createdAt   DateTime @default(now())
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rules Rule[]
+  logs  ReplyLog[]
+
+  @@unique([platform, externalId])
+}
+
+model Rule {
+  id             String   @id @default(cuid())
+  userId         String
+  pageId         String
+  postId         String // معرّف المنشور في المنصة
+  postUrl        String?
+  postPreview    String?
+  postImage      String?
+  name           String?
+  enabled        Boolean  @default(true)
+  publicReply    Boolean  @default(true)
+  replyVariants  String   @default("[]") // JSON: عدة صيغ للرد العلني تُختار عشوائياً
+  privateReply   Boolean  @default(true)
+  dmMessage      String?
+  keywords       String   @default("[]") // JSON: فارغ = الرد على كل التعليقات
+  oncePerUser    Boolean  @default(true)
+  delaySeconds   Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  page Page       @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  logs ReplyLog[]
+
+  @@unique([pageId, postId])
+}
+
+// سجل كل تعليق وارد، ويعمل أيضاً كطابور للمهام المؤجلة
+model ReplyLog {
+  id            String    @id @default(cuid())
+  userId        String
+  pageId        String
+  ruleId        String?
+  commentId     String    @unique
+  commenterId   String?
+  commenterName String?
+  commentText   String?
+  status        String    @default("pending") // pending | done | partial | failed | skipped
+  skipReason    String?
+  publicStatus  String? // sent | failed | off
+  privateStatus String? // sent | failed | off
+  error         String?
+  attempts      Int       @default(0)
+  runAt         DateTime  @default(now())
+  processedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  page Page  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  rule Rule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  @@index([status, runAt])
+  @@index([userId, createdAt])
+  @@index([ruleId, commenterId])
+}
+
+// أحداث النظام: أخطاء، انتهاء صلاحيات، مدفوعات... تظهر في لوحة الإدارة
+model SystemEvent {
+  id        String   @id @default(cuid())
+  level     String // info | warn | error
+  source    String // webhook | engine | auth | billing | admin
+  message   String
+  userId    String?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([level, resolved])
+}
+
+model Ticket {
+  id        String   @id @default(cuid())
+  userId    String
+  subject   String
+  status    String   @default("open") // open | answered | closed
+  unreadByUser  Boolean @default(false)
+  unreadByAdmin Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages TicketMessage[]
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  fromAdmin Boolean
+  body      String
+  createdAt DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
