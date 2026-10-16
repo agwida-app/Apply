@@ -63,11 +63,12 @@ export default async function RuleDetail({ params, searchParams }: { params: Pro
                 <tr key={l.id}>
                   <td className="font-bold">{l.commenterName ?? "—"}</td>
                   <td className="max-w-xs">{l.commentText}</td>
-                  <td><Badge tone={LOG_STATUS[l.status]?.tone}>{LOG_STATUS[l.status]?.label}</Badge></td>
+                  <td><Badge tone={LOG_STATUS[l.status]?.tone}>{LOG_STATUS[l.status]?.label}</Badge>{l.aiUsed && <div className="mt-1"><Badge tone="blue">🤖 ذكي</Badge></div>}</td>
                   <td className="muted text-xs">
                     {l.skipReason && (SKIP_REASON[l.skipReason] ?? l.skipReason)}
                     {l.publicStatus && <div>💬 {l.publicStatus === "sent" ? "أُرسل" : l.publicStatus === "off" ? "—" : "فشل"}</div>}
                     {l.privateStatus && <div>📩 {l.privateStatus === "sent" ? "أُرسلت" : l.privateStatus === "off" ? "—" : "فشلت"}</div>}
+                    {l.aiPublicText && <div className="mt-1 max-w-xs">💬 «{l.aiPublicText}»</div>}
                     {l.error && <div className="text-red-600">{l.error}</div>}
                   </td>
                   <td className="faint whitespace-nowrap text-xs">{fmtDate(l.createdAt)}</td>
@@ -82,7 +83,7 @@ export default async function RuleDetail({ params, searchParams }: { params: Pro
       <RuleEditor pages={[]} initial={{
         id: rule.id, pageId: rule.pageId, postId: rule.postId, postUrl: rule.postUrl, postPreview: rule.postPreview, postImage: rule.postImage,
         name: rule.name ?? "", publicReply: rule.publicReply, replyVariants: parseList(rule.replyVariants), privateReply: rule.privateReply,
-        dmMessage: rule.dmMessage ?? "", keywords: parseList(rule.keywords), oncePerUser: rule.oncePerUser, delaySeconds: rule.delaySeconds,
+        dmMessage: rule.dmMessage ?? "", keywords: parseList(rule.keywords), oncePerUser: rule.oncePerUser, delaySeconds: rule.delaySeconds, aiMode: rule.aiMode,
         pageName: rule.page.name, platform: rule.page.platform,
       }} />
 

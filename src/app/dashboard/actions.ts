@@ -100,7 +100,7 @@ export async function findPost(pageId: string, url: string): Promise<{ post?: Po
 export type RuleInput = {
   id?: string; pageId: string; postId: string; postUrl?: string | null; postPreview?: string | null; postImage?: string | null;
   name?: string; publicReply: boolean; replyVariants: string[]; privateReply: boolean; dmMessage: string;
-  keywords: string[]; oncePerUser: boolean; delaySeconds: number;
+  keywords: string[]; oncePerUser: boolean; delaySeconds: number; aiMode?: boolean;
 };
 
 export async function saveRule(input: RuleInput): Promise<{ error?: string; id?: string }> {
@@ -123,6 +123,7 @@ export async function saveRule(input: RuleInput): Promise<{ error?: string; id?:
     name: input.name?.trim() || null, publicReply: input.publicReply, replyVariants: JSON.stringify(variants),
     privateReply: input.privateReply, dmMessage: dm || null,
     keywords: JSON.stringify(input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 30)),
+    aiMode: !!input.aiMode,
     oncePerUser: input.oncePerUser, delaySeconds: Math.max(0, Math.min(3600, Math.round(input.delaySeconds) || 0)),
   };
 

@@ -35,6 +35,7 @@ export default async function Rules({ searchParams }: { searchParams: Promise<{ 
                   <p className="muted line-clamp-2 text-sm">{r.postPreview || "(منشور بدون نص)"}</p>
                 </Link>
                 <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+                  {r.aiMode && <Badge tone="blue">🤖 رد ذكي</Badge>}
                   {r.publicReply && <Badge tone="blue">💬 رد علني</Badge>}
                   {r.privateReply && <Badge tone="blue">📩 رسالة خاصة</Badge>}
                   {kw.length > 0 && <Badge tone="amber">🔑 {kw.length} كلمات</Badge>}

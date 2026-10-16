@@ -59,6 +59,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
   const [keywords, setKeywords] = useState((initial?.keywords ?? []).join("، "));
   const [oncePerUser, setOncePerUser] = useState(initial?.oncePerUser ?? true);
   const [delay, setDelay] = useState(initial?.delaySeconds ?? 0);
+  const [aiMode, setAiMode] = useState(initial?.aiMode ?? false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [searching, startSearch] = useTransition();
@@ -86,7 +87,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
     const kw = keywords.split(/[,،\n]/).map((k) => k.trim()).filter(Boolean);
     const r = await saveRule({
       id: initial?.id, pageId, postId: post.id, postUrl: post.permalink, postPreview: post.text, postImage: post.image,
-      name, publicReply, replyVariants: variants, privateReply: privateReply && !isTikTok, dmMessage: dm, keywords: kw, oncePerUser, delaySeconds: delay,
+      name, publicReply, replyVariants: variants, privateReply: privateReply && !isTikTok, dmMessage: dm, keywords: kw, oncePerUser, delaySeconds: delay, aiMode,
     });
     if (r.error) { setError(r.error); if (r.id) router.push(`/dashboard/rules/${r.id}`); return; }
     router.push(`/dashboard/rules/${r.id}?saved=1`);
@@ -157,7 +158,17 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
           </div>
         </Section>
 
-        <Section n={2} title="الرد العلني على التعليق">
+        <section className={`card border-2 ${aiMode ? "border-brand-500" : "border-dashed"}`}>
+          <Toggle on={aiMode} onChange={setAiMode} label="🤖 الرد الذكي بالذكاء الاصطناعي" />
+          <p className="faint mt-2 text-xs">
+            {aiMode
+              ? "سيقرأ الذكاء الاصطناعي كل تعليق ويكتب رداً خاصاً بسؤال الزبون من معلومات متجرك. الردود التي تكتبها بالأسفل تُستخدم كاحتياط إذا انتهى الرصيد أو حدث خطأ."
+              : "بدل رد ثابت للجميع، يجيب على سؤال كل زبون (السعر، المقاس، التوصيل…) من معلومات متجرك."}{" "}
+            <a href="/dashboard/ai" target="_blank" className="font-bold text-brand-600 hover:underline">إعداد معلومات المتجر</a>
+          </p>
+        </section>
+
+        <Section n={2} title={aiMode ? "الرد العلني الاحتياطي" : "الرد العلني على التعليق"}>
           <Toggle on={publicReply} onChange={setPublicReply} label="الرد على التعليق في المنشور" />
           {publicReply && (
             <div className="mt-4 space-y-2">
@@ -181,7 +192,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
           )}
         </Section>
 
-        <Section n={3} title="الرسالة الخاصة (تصل لبريد الرسائل)">
+        <Section n={3} title={aiMode ? "الرسالة الخاصة الاحتياطية" : "الرسالة الخاصة (تصل لبريد الرسائل)"}>
           {isTikTok ? (
             <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
               تيك توك لا يسمح حالياً للتطبيقات بإرسال رسالة خاصة لمن يعلّق في منطقتنا. 💡 اكتب في الرد العلني ما يدفع الزبون للتواصل، مثل: «راسلنا على الخاص» أو «الرابط في البايو 👆».
@@ -228,7 +239,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
       {/* المعاينة */}
       <div className="lg:sticky lg:top-6 lg:self-start">
         <div className="card">
-          <div className="mb-4 font-extrabold">👁 معاينة</div>
+          <div className="mb-4 font-extrabold">👁 معاينة {aiMode && <span className="text-xs text-brand-600">(الرد الاحتياطي — الرد الذكي يختلف حسب كل تعليق)</span>}</div>
           <div className="space-y-3 text-sm">
             <div className="flex gap-2">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-300 dark:bg-slate-600">👩</span>

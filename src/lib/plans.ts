@@ -1,28 +1,28 @@
 export type PlanId = "starter" | "pro" | "business";
 
 export const PLANS: Record<PlanId, {
-  name: string; price: number; priceLyd: number; pages: number; rules: number; repliesPerMonth: number; features: string[];
+  name: string; price: number; priceLyd: number; pages: number; rules: number; repliesPerMonth: number; aiRepliesPerMonth: number; features: string[];
 }> = {
   starter: {
-    name: "الأساسية", price: 9, priceLyd: 60, pages: 1, rules: 5, repliesPerMonth: 1000,
+    name: "الأساسية", price: 9, priceLyd: 60, pages: 1, rules: 5, repliesPerMonth: 1000, aiRepliesPerMonth: 0,
     features: ["صفحة واحدة", "5 منشورات نشطة", "1,000 رد شهرياً", "رد علني + رسالة خاصة"],
   },
   pro: {
-    name: "الاحترافية", price: 19, priceLyd: 120, pages: 3, rules: 30, repliesPerMonth: 10000,
-    features: ["3 حسابات (فيسبوك، إنستغرام، تيك توك)", "30 منشور نشط", "10,000 رد شهرياً", "كلمات مفتاحية وردود متعددة"],
+    name: "الاحترافية", price: 19, priceLyd: 120, pages: 3, rules: 30, repliesPerMonth: 10000, aiRepliesPerMonth: 1000,
+    features: ["3 حسابات (فيسبوك، إنستغرام، تيك توك)", "30 منشور نشط", "10,000 رد شهرياً", "كلمات مفتاحية وردود متعددة", "🤖 1,000 رد ذكي بالذكاء الاصطناعي"],
   },
   business: {
-    name: "الأعمال", price: 49, priceLyd: 300, pages: 10, rules: 200, repliesPerMonth: 100000,
-    features: ["10 صفحات", "200 منشور نشط", "100,000 رد شهرياً", "دعم أولوية"],
+    name: "الأعمال", price: 49, priceLyd: 300, pages: 10, rules: 200, repliesPerMonth: 100000, aiRepliesPerMonth: 10000,
+    features: ["10 صفحات", "200 منشور نشط", "100,000 رد شهرياً", "🤖 10,000 رد ذكي", "دعم أولوية"],
   },
 };
 
-export const TRIAL_LIMITS = { pages: 1, rules: 2, repliesPerMonth: 100 };
+export const TRIAL_LIMITS = { pages: 1, rules: 2, repliesPerMonth: 100, aiRepliesPerMonth: 20 };
 
 export function limitsFor(user: { plan: string | null; subscriptionStatus: string }) {
   if (user.subscriptionStatus === "trialing") return TRIAL_LIMITS;
   const p = user.plan && PLANS[user.plan as PlanId];
-  return p ? { pages: p.pages, rules: p.rules, repliesPerMonth: p.repliesPerMonth } : { pages: 0, rules: 0, repliesPerMonth: 0 };
+  return p ? { pages: p.pages, rules: p.rules, repliesPerMonth: p.repliesPerMonth, aiRepliesPerMonth: p.aiRepliesPerMonth } : { pages: 0, rules: 0, repliesPerMonth: 0, aiRepliesPerMonth: 0 };
 }
 
 export function hasActiveSubscription(user: { subscriptionStatus: string; subscriptionEndsAt: Date | null }) {

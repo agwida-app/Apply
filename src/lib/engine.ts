@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { logEvent } from "./events";
-import { classifyError, sendPrivateReply, sendPublicReply, supportsPrivateReply } from "./platforms";
+import { classifyError, replyMaxLength, sendPrivateReply, sendPublicReply, supportsPrivateReply } from "./platforms";
+import { aiAvailable, generateAiReply } from "./ai";
 import { hasActiveSubscription, limitsFor } from "./plans";
 import { matchesKeywords, parseList, pick, renderTemplate } from "./text";
 
@@ -76,7 +77,7 @@ export async function handleIncomingComment(c: IncomingComment) {
 export async function processLog(id: string) {
   const claimed = await db.replyLog.updateMany({ where: { id, status: "pending" }, data: { status: "processing", attempts: { increment: 1 } } });
   if (claimed.count === 0) return;
-  const log = await db.replyLog.findUniqueOrThrow({ where: { id }, include: { rule: true, page: true } });
+  const log = await db.replyLog.findUniqueOrThrow({ where: { id }, include: { rule: true, page: { include: { user: true } } } });
   const { rule, page } = log;
   if (!rule) {
     await db.replyLog.update({ where: { id }, data: { status: "skipped", skipReason: "rule_deleted", processedAt: new Date() } });
@@ -103,10 +104,38 @@ export async function processLog(id: string) {
     }
   };
 
-  const variants = parseList(rule.replyVariants);
-  const publicText = pick(variants);
-  const publicStatus = await run(rule.publicReply && !!publicText, log.publicStatus, () => sendPublicReply(page, rule.postId, log.commentId, renderTemplate(publicText!, vars)));
-  const privateStatus = await run(rule.privateReply && supportsPrivateReply(page.platform) && !!rule.dmMessage?.trim(), log.privateStatus, () => sendPrivateReply(page, log.commentId, renderTemplate(rule.dmMessage!, vars)));
+  const wantPublic = rule.publicReply;
+  const wantDm = rule.privateReply && supportsPrivateReply(page.platform);
+
+  // الرد الذكي: نولّده مرة واحدة ونحفظه، فإعادة المحاولة ترسل نفس النص
+  let aiPublic = log.aiPublicText, aiDm = log.aiDmText;
+  if (rule.aiMode && !log.aiUsed && aiAvailable()) {
+    const used = await db.replyLog.count({ where: { userId: log.userId, aiUsed: true, createdAt: { gte: startOfMonth() } } });
+    if (used < limitsFor(page.user).aiRepliesPerMonth) {
+      try {
+        const ai = await generateAiReply({
+          platform: page.platform, businessInfo: page.user.businessInfo ?? "", tone: page.user.aiTone,
+          postText: rule.postPreview, commenterName: log.commenterName, comment: log.commentText ?? "",
+          wantPublic, wantDm, publicMax: replyMaxLength(page.platform),
+        });
+        if (!ai.shouldReply) {
+          await db.replyLog.update({ where: { id }, data: { status: "skipped", skipReason: "ai_skipped", aiUsed: true, processedAt: new Date() } });
+          return;
+        }
+        aiPublic = ai.publicReply || null;
+        aiDm = ai.dmMessage || null;
+        await db.replyLog.update({ where: { id }, data: { aiUsed: true, aiPublicText: aiPublic, aiDmText: aiDm } });
+      } catch (e) {
+        await logEvent("warn", "ai", `تعذر الرد الذكي، تم استخدام الرد الثابت: ${(e as Error).message}`, log.userId);
+      }
+    }
+  }
+
+  const template = pick(parseList(rule.replyVariants));
+  const publicText = aiPublic ?? (template ? renderTemplate(template, vars) : null);
+  const dmText = aiDm ?? (rule.dmMessage?.trim() ? renderTemplate(rule.dmMessage, vars) : null);
+  const publicStatus = await run(wantPublic && !!publicText, log.publicStatus, () => sendPublicReply(page, rule.postId, log.commentId, publicText!));
+  const privateStatus = await run(wantDm && !!dmText, log.privateStatus, () => sendPrivateReply(page, log.commentId, dmText!));
 
   const sent = [publicStatus, privateStatus].filter((s) => s === "sent").length;
   const failed = [publicStatus, privateStatus].filter((s) => s === "failed").length;

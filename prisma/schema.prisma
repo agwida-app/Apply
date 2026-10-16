@@ -22,6 +22,8 @@ model User {
   subscriptionEndsAt DateTime?
   stripeCustomerId   String?
   adminNote          String?
+  businessInfo       String? // معلومات المتجر التي يعتمد عليها الرد الذكي
+  aiTone             String    @default("friendly") // friendly | formal | libyan
   isDemo             Boolean   @default(false)
   createdAt          DateTime  @default(now())
   lastLoginAt        DateTime  @default(now())
@@ -74,6 +76,7 @@ model Rule {
   keywords       String   @default("[]") // JSON: فارغ = الرد على كل التعليقات
   oncePerUser    Boolean  @default(true)
   delaySeconds   Int      @default(0)
+  aiMode         Boolean  @default(false) // الرد بالذكاء الاصطناعي بدل الردود الثابتة
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -98,6 +101,9 @@ model ReplyLog {
   skipReason    String?
   publicStatus  String? // sent | failed | off
   privateStatus String? // sent | failed | off
+  aiUsed        Boolean   @default(false)
+  aiPublicText  String? // ما كتبه الذكاء الاصطناعي (يُعاد استخدامه عند إعادة المحاولة)
+  aiDmText      String?
   error         String?
   attempts      Int       @default(0)
   runAt         DateTime  @default(now())

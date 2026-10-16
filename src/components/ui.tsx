@@ -49,6 +49,7 @@ export const SKIP_REASON: Record<string, string> = {
   quota_exceeded: "تجاوز الحد الشهري",
   account_suspended: "الحساب موقوف",
   rule_deleted: "تم حذف القاعدة",
+  ai_skipped: "الذكاء الاصطناعي اعتبره سبام/إساءة",
 };
 
 export function Empty({ title, desc, action }: { title: string; desc?: string; action?: React.ReactNode }) {
