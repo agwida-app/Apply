@@ -52,7 +52,7 @@ export default function Home() {
             <div className="rounded-2xl px-3 py-2" style={{ background: "var(--surface-2)" }}><b className="text-sm">متجرك</b><div>أهلاً سارة 🌷 أرسلنا لك التفاصيل على الخاص</div></div>
           </div>
           <div className="mt-4 rounded-2xl bg-brand-600 px-4 py-3 text-sm text-white">
-            📩 رسالة خاصة: السعر 120 ريال والتوصيل مجاني. للطلب أرسل عنوانك 👇
+            📩 رسالة خاصة: السعر 120 د.ل والتوصيل متاح لكل المدن. للطلب أرسل عنوانك 👇
           </div>
         </div>
       </section>
