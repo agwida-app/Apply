@@ -32,7 +32,7 @@ export default async function Payments({ searchParams }: { searchParams: Promise
       </div>
       <div className="mb-4 flex flex-wrap gap-2">
         {TABS.map(([v, l]) => (
-          <Link key={v} href={`/admin/payments?t=${v}`} className={`rounded-full px-4 py-1.5 text-sm font-bold ${t === v ? "bg-brand-600 text-white" : "border"}`} style={t === v ? undefined : { borderColor: "var(--border)" }}>{l}</Link>
+          <Link key={v} href={`/admin/payments?t=${v}`} className={`rounded-full px-4 py-1.5 text-sm font-medium ${t === v ? "chip-on border" : "border"}`} style={t === v ? undefined : { borderColor: "var(--border)" }}>{l}</Link>
         ))}
       </div>
       <div className="card">

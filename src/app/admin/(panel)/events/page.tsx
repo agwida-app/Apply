@@ -15,7 +15,7 @@ export default async function Events({ searchParams }: { searchParams: Promise<{
         action={<form action={resolveEvent}><input type="hidden" name="id" value="all" /><button className="btn-ghost">✓ تعليم الكل كمحلول</button></form>} />
       <div className="mb-4 flex flex-wrap gap-2">
         {LEVELS.map(([v, t]) => (
-          <Link key={v} href={`/admin/events?l=${v}`} className={`rounded-full px-4 py-1.5 text-sm font-bold ${l === v ? "bg-brand-600 text-white" : "border"}`} style={l === v ? undefined : { borderColor: "var(--border)" }}>{t}</Link>
+          <Link key={v} href={`/admin/events?l=${v}`} className={`rounded-full px-4 py-1.5 text-sm font-medium ${l === v ? "chip-on border" : "border"}`} style={l === v ? undefined : { borderColor: "var(--border)" }}>{t}</Link>
         ))}
       </div>
       <div className="card">

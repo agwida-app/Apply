@@ -44,11 +44,11 @@ export default async function Overview() {
 
       {onboarding && (
         <div className="card mb-6">
-          <div className="mb-3 font-extrabold">ابدأ في 3 خطوات</div>
+          <div className="mb-3 font-bold">ابدأ في 3 خطوات</div>
           <ol className="space-y-2">
             {steps.map((s, i) => (
               <li key={s.label} className="flex items-center gap-3">
-                <span className={`grid h-7 w-7 place-items-center rounded-full text-sm font-bold ${s.done ? "bg-emerald-500 text-white" : "bg-[var(--surface-2)]"}`}>{s.done ? "✓" : i + 1}</span>
+                <span className={`grid h-7 w-7 place-items-center rounded-full text-sm font-medium ${s.done ? "bg-emerald-500 text-white" : "bg-[var(--surface-2)]"}`}>{s.done ? "✓" : i + 1}</span>
                 {s.done ? <span className="muted line-through">{s.label}</span> : <TextLink href={s.href}>{s.label}</TextLink>}
               </li>
             ))}
@@ -65,11 +65,11 @@ export default async function Overview() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
         <div className="card lg:col-span-3">
-          <div className="mb-4 font-extrabold">الردود خلال آخر 14 يوماً</div>
+          <div className="mb-4 font-bold">الردود خلال آخر 14 يوماً</div>
           <DailyBars data={bucketByDay(chartRows, days)} />
         </div>
         <div className="card lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between font-extrabold">آخر التعليقات <TextLink href="/dashboard/activity">الكل</TextLink></div>
+          <div className="mb-3 flex items-center justify-between font-bold">آخر التعليقات <TextLink href="/dashboard/activity">الكل</TextLink></div>
           {recent.length === 0 ? <p className="muted text-sm">لا توجد تعليقات بعد.</p> : (
             <ul className="space-y-3">
               {recent.map((l) => (

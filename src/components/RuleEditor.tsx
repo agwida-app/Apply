@@ -34,7 +34,7 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
 function Section({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <section className="card">
-      <h2 className="mb-4 flex items-center gap-2 font-extrabold">
+      <h2 className="mb-4 flex items-center gap-2 font-bold">
         <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-600 text-sm text-white">{n}</span>{title}
       </h2>
       {children}
@@ -42,7 +42,7 @@ function Section({ n, title, children }: { n: number; title: string; children: R
   );
 }
 
-export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: RuleInput & { id: string; pageName: string; platform: string } }) {
+export function RuleEditor({ pages, initial, templates = [] }: { pages: PageOpt[]; initial?: RuleInput & { id: string; pageName: string; platform: string }; templates?: { id: string; name: string }[] }) {
   const router = useRouter();
   const editing = !!initial;
   const [pageId, setPageId] = useState(initial?.pageId ?? pages[0]?.id ?? "");
@@ -60,6 +60,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
   const [oncePerUser, setOncePerUser] = useState(initial?.oncePerUser ?? true);
   const [delay, setDelay] = useState(initial?.delaySeconds ?? 0);
   const [aiMode, setAiMode] = useState(initial?.aiMode ?? false);
+  const [tplId, setTplId] = useState<string>(initial?.dmTemplateId ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [searching, startSearch] = useTransition();
@@ -87,7 +88,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
     const kw = keywords.split(/[,،\n]/).map((k) => k.trim()).filter(Boolean);
     const r = await saveRule({
       id: initial?.id, pageId, postId: post.id, postUrl: post.permalink, postPreview: post.text, postImage: post.image,
-      name, publicReply, replyVariants: variants, privateReply: privateReply && !isTikTok, dmMessage: dm, keywords: kw, oncePerUser, delaySeconds: delay, aiMode,
+      name, publicReply, replyVariants: variants, privateReply: privateReply && !isTikTok, dmMessage: dm, keywords: kw, oncePerUser, delaySeconds: delay, aiMode, dmTemplateId: tplId || null,
     });
     if (r.error) { setError(r.error); if (r.id) router.push(`/dashboard/rules/${r.id}`); return; }
     router.push(`/dashboard/rules/${r.id}?saved=1`);
@@ -108,7 +109,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
               <div className="flex flex-wrap gap-2">
                 {pages.map((p) => (
                   <button key={p.id} type="button" onClick={() => setPageId(p.id)}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold ${p.id === pageId ? "border-brand-600 ring-2 ring-brand-200 dark:ring-brand-800" : ""}`}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium ${p.id === pageId ? "border-brand-400 bg-brand-50/60 ring-4 ring-brand-100 dark:border-brand-500 dark:bg-brand-900/30 dark:ring-brand-900/40" : ""}`}
                     style={p.id === pageId ? undefined : { borderColor: "var(--border)" }}>
                     <PlatformIcon platform={p.platform} /> {p.name}
                   </button>
@@ -117,7 +118,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
               <div className="mt-4 inline-flex rounded-xl p-1" style={{ background: "var(--surface-2)" }}>
                 {(["list", "url"] as const).map((m) => (
                   <button key={m} type="button" onClick={() => setMode(m)}
-                    className={`rounded-lg px-4 py-1.5 text-sm font-bold ${mode === m ? "bg-[var(--surface)] shadow" : "muted"}`}>
+                    className={`rounded-lg px-4 py-1.5 text-sm font-medium ${mode === m ? "bg-[var(--surface)] shadow" : "muted"}`}>
                     {m === "list" ? (isTikTok ? "اختيار من الفيديوهات" : "اختيار من المنشورات") : "عن طريق الرابط"}
                   </button>
                 ))}
@@ -134,7 +135,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
                   {posts?.length === 0 && <p className="muted text-sm">لا توجد منشورات.</p>}
                   {posts?.map((p) => (
                     <button key={p.id} type="button" onClick={() => setPost(p)}
-                      className={`flex gap-3 rounded-xl border p-2 text-start text-sm ${post?.id === p.id ? "border-brand-600 ring-2 ring-brand-200 dark:ring-brand-800" : ""}`}
+                      className={`flex gap-3 rounded-xl border p-2 text-start text-sm ${post?.id === p.id ? "border-brand-400 bg-brand-50/60 ring-4 ring-brand-100 dark:border-brand-500 dark:bg-brand-900/30 dark:ring-brand-900/40" : ""}`}
                       style={post?.id === p.id ? undefined : { borderColor: "var(--border)" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       {p.image ? <img src={p.image} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" /> : <span className="grid h-16 w-16 shrink-0 place-items-center rounded-lg text-2xl" style={{ background: "var(--surface-2)" }}>📝</span>}
@@ -200,6 +201,24 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
           ) : <>
           <Toggle on={privateReply} onChange={setPrivateReply} label={platform === "instagram" ? "إرسال رسالة في Direct" : "إرسال رسالة في ماسنجر"} />
           {privateReply && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button type="button" onClick={() => setTplId("")} className={`chip ${!tplId ? "chip-on" : ""}`}>💬 رسالة نصية</button>
+              <button type="button" onClick={() => setTplId(templates[0]?.id ?? "new")} className={`chip ${tplId ? "chip-on" : ""}`}>🛍 رسالة تفاعلية (صور، منتجات، أزرار)</button>
+            </div>
+          )}
+          {privateReply && tplId && (
+            <div className="mt-3 space-y-2">
+              {templates.length === 0 ? (
+                <p className="text-sm">لا توجد رسائل تفاعلية بعد. <a href="/dashboard/messages/new" target="_blank" className="font-semibold text-brand-600 hover:underline">أنشئ واحدة</a> ثم ارجع هنا.</p>
+              ) : <>
+                <select className="input" value={tplId} onChange={(e) => setTplId(e.target.value)}>
+                  {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+                <p className="faint text-xs">يُرسل للزبون في الخاص مع الصور والأزرار. {aiMode && "مع الرد الذكي: يُرسل رد الذكاء الاصطناعي أولاً ومعه زر «عرض التفاصيل» يفتح هذه الرسالة."} <a href={`/dashboard/messages/${tplId}`} target="_blank" className="font-semibold text-brand-600 hover:underline">تعديلها</a></p>
+              </>}
+            </div>
+          )}
+          {privateReply && !tplId && (
             <div className="mt-4 space-y-2">
               <textarea rows={5} className="input" placeholder="اكتب الرسالة التي ستصل للزبون…" value={dm} onChange={(e) => setDm(e.target.value)} />
               <div className="faint flex justify-between text-xs"><span>يمكن استخدام {"{name}"}</span><span>{dm.length}/2000</span></div>
@@ -227,7 +246,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
               <div className="flex flex-wrap gap-2">
                 {DELAYS.map(([s, l]) => (
                   <button key={s} type="button" onClick={() => setDelay(s)}
-                    className={`rounded-xl border px-3 py-1.5 text-sm font-bold ${delay === s ? "border-brand-600 bg-brand-600 text-white" : ""}`}
+                    className={`rounded-xl border px-3 py-1.5 text-sm font-medium ${delay === s ? "chip-on" : ""}`}
                     style={delay === s ? undefined : { borderColor: "var(--border)" }}>{l}</button>
                 ))}
               </div>
@@ -239,7 +258,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
       {/* المعاينة */}
       <div className="lg:sticky lg:top-6 lg:self-start">
         <div className="card">
-          <div className="mb-4 font-extrabold">👁 معاينة {aiMode && <span className="text-xs text-brand-600">(الرد الاحتياطي — الرد الذكي يختلف حسب كل تعليق)</span>}</div>
+          <div className="mb-4 font-bold">👁 معاينة {aiMode && <span className="text-xs text-brand-600">(الرد الاحتياطي — الرد الذكي يختلف حسب كل تعليق)</span>}</div>
           <div className="space-y-3 text-sm">
             <div className="flex gap-2">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-300 dark:bg-slate-600">👩</span>
@@ -251,7 +270,10 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
                 <div className="rounded-2xl px-3 py-2" style={{ background: "var(--surface-2)" }}><b>صفحتك</b><div className="whitespace-pre-wrap">{sample(firstVariant)}</div></div>
               </div>
             )}
-            {!isTikTok && privateReply && dm.trim() && (
+            {!isTikTok && privateReply && tplId && (
+              <div className="mt-4 border-t pt-4 text-center text-xs" style={{ borderColor: "var(--border)" }}>📩 رسالة تفاعلية: «{templates.find((t) => t.id === tplId)?.name}»</div>
+            )}
+            {!isTikTok && privateReply && !tplId && dm.trim() && (
               <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
                 <div className="faint mb-2 text-xs">📩 في {platform === "instagram" ? "Direct" : "ماسنجر"}</div>
                 <div className="me-6 whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-brand-600 px-3 py-2 text-white">{sample(dm)}</div>

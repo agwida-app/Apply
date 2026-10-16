@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { logEvent } from "./events";
-import { classifyError, replyMaxLength, sendPrivateReply, sendPublicReply, supportsPrivateReply } from "./platforms";
+import { classifyError, replyMaxLength, sendPrivateReply, sendPrivateTemplate, sendPublicReply, supportsPrivateReply } from "./platforms";
+import { toTemplateData } from "./messenger";
 import { aiAvailable, generateAiReply } from "./ai";
 import { hasActiveSubscription, limitsFor } from "./plans";
 import { matchesKeywords, parseList, pick, renderTemplate } from "./text";
@@ -77,7 +78,7 @@ export async function handleIncomingComment(c: IncomingComment) {
 export async function processLog(id: string) {
   const claimed = await db.replyLog.updateMany({ where: { id, status: "pending" }, data: { status: "processing", attempts: { increment: 1 } } });
   if (claimed.count === 0) return;
-  const log = await db.replyLog.findUniqueOrThrow({ where: { id }, include: { rule: true, page: { include: { user: true } } } });
+  const log = await db.replyLog.findUniqueOrThrow({ where: { id }, include: { rule: { include: { dmTemplate: true } }, page: { include: { user: true } } } });
   const { rule, page } = log;
   if (!rule) {
     await db.replyLog.update({ where: { id }, data: { status: "skipped", skipReason: "rule_deleted", processedAt: new Date() } });
@@ -135,7 +136,11 @@ export async function processLog(id: string) {
   const publicText = aiPublic ?? (template ? renderTemplate(template, vars) : null);
   const dmText = aiDm ?? (rule.dmMessage?.trim() ? renderTemplate(rule.dmMessage, vars) : null);
   const publicStatus = await run(wantPublic && !!publicText, log.publicStatus, () => sendPublicReply(page, rule.postId, log.commentId, publicText!));
-  const privateStatus = await run(wantDm && !!dmText, log.privateStatus, () => sendPrivateReply(page, log.commentId, dmText!));
+  // رسالة تفاعلية (صور/بطاقات/أزرار) إن اختارها العميل، والنص الذكي يصبح مقدمتها
+  const tpl = rule.dmTemplate ? toTemplateData(rule.dmTemplate) : null;
+  const privateStatus = await run(wantDm && (!!tpl || !!dmText), log.privateStatus, () =>
+    tpl ? sendPrivateTemplate(page, log.commentId, tpl, aiDm) : sendPrivateReply(page, log.commentId, dmText!));
+  if (tpl && privateStatus === "sent") await db.messageTemplate.update({ where: { id: tpl.id }, data: { sendCount: { increment: 1 } } });
 
   const sent = [publicStatus, privateStatus].filter((s) => s === "sent").length;
   const failed = [publicStatus, privateStatus].filter((s) => s === "failed").length;

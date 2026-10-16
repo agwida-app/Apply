@@ -100,7 +100,7 @@ export async function findPost(pageId: string, url: string): Promise<{ post?: Po
 export type RuleInput = {
   id?: string; pageId: string; postId: string; postUrl?: string | null; postPreview?: string | null; postImage?: string | null;
   name?: string; publicReply: boolean; replyVariants: string[]; privateReply: boolean; dmMessage: string;
-  keywords: string[]; oncePerUser: boolean; delaySeconds: number; aiMode?: boolean;
+  keywords: string[]; oncePerUser: boolean; delaySeconds: number; aiMode?: boolean; dmTemplateId?: string | null;
 };
 
 export async function saveRule(input: RuleInput): Promise<{ error?: string; id?: string }> {
@@ -115,7 +115,10 @@ export async function saveRule(input: RuleInput): Promise<{ error?: string; id?:
   const max = replyMaxLength(page.platform);
   if (variants.some((v) => [...v].length > max)) return { error: `الرد في ${page.platform === "tiktok" ? "تيك توك" : "هذه المنصة"} لا يتجاوز ${max} حرفاً.` };
   if (input.publicReply && !variants.length) return { error: "اكتب نص الرد العلني أو أوقف خيار الرد العلني." };
-  if (input.privateReply && !dm) return { error: "اكتب نص الرسالة الخاصة أو أوقف خيار الرسالة الخاصة." };
+  const tplId = input.dmTemplateId && supportsPrivateReply(page.platform)
+    ? (await db.messageTemplate.findFirst({ where: { id: input.dmTemplateId, userId: user.id }, select: { id: true } }))?.id ?? null
+    : null;
+  if (input.privateReply && !dm && !tplId) return { error: "اكتب نص الرسالة الخاصة أو اختر رسالة تفاعلية، أو أوقف خيار الرسالة الخاصة." };
   if (!input.publicReply && !input.privateReply) return { error: "فعّل الرد العلني أو الرسالة الخاصة على الأقل." };
   if (dm.length > 2000 || variants.some((v) => v.length > 2000)) return { error: "النص طويل جداً (الحد 2000 حرف)." };
 
@@ -124,6 +127,7 @@ export async function saveRule(input: RuleInput): Promise<{ error?: string; id?:
     privateReply: input.privateReply, dmMessage: dm || null,
     keywords: JSON.stringify(input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 30)),
     aiMode: !!input.aiMode,
+    dmTemplateId: tplId,
     oncePerUser: input.oncePerUser, delaySeconds: Math.max(0, Math.min(3600, Math.round(input.delaySeconds) || 0)),
   };
 

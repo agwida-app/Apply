@@ -38,7 +38,7 @@ export function AiTester({ tones, initialInfo, initialTone, saveAction }: {
           <label className="label">أسلوب الرد</label>
           <div className="flex flex-wrap gap-2">
             {tones.map((t) => (
-              <label key={t.id} className={`cursor-pointer rounded-xl border px-3 py-2 text-sm font-bold ${tone === t.id ? "border-brand-600 bg-brand-600 text-white" : ""}`} style={tone === t.id ? undefined : { borderColor: "var(--border)" }}>
+              <label key={t.id} className={`cursor-pointer rounded-xl border px-3 py-2 text-sm font-medium ${tone === t.id ? "chip-on" : ""}`} style={tone === t.id ? undefined : { borderColor: "var(--border)" }}>
                 <input type="radio" name="tone" value={t.id} checked={tone === t.id} onChange={() => setTone(t.id)} className="hidden" />{t.label}
               </label>
             ))}
@@ -48,10 +48,10 @@ export function AiTester({ tones, initialInfo, initialTone, saveAction }: {
       </form>
 
       <div className="card space-y-3 lg:col-span-2 lg:self-start">
-        <div className="font-extrabold">🧪 جرّب الرد الذكي</div>
+        <div className="font-bold">🧪 جرّب الرد الذكي</div>
         <div className="grid grid-cols-3 gap-2">
           {[["facebook", "فيسبوك"], ["instagram", "إنستغرام"], ["tiktok", "تيك توك"]].map(([v, l]) => (
-            <button key={v} type="button" onClick={() => setPlatform(v)} className={`rounded-lg border py-1.5 text-xs font-bold ${platform === v ? "border-brand-600 bg-brand-600 text-white" : ""}`} style={platform === v ? undefined : { borderColor: "var(--border)" }}>{l}</button>
+            <button key={v} type="button" onClick={() => setPlatform(v)} className={`rounded-lg border py-1.5 text-xs font-medium ${platform === v ? "chip-on" : ""}`} style={platform === v ? undefined : { borderColor: "var(--border)" }}>{l}</button>
           ))}
         </div>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="اسم الزبون" />

@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { handleIncomingComment, IncomingComment } from "@/lib/engine";
 import { logEvent } from "@/lib/events";
+import { handleMessagingEvent, MessagingEvent } from "@/lib/inbox";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export function GET(req: NextRequest) {
 }
 
 type Change = { field: string; value: Record<string, any> };
-type Body = { object: string; entry?: { id: string; changes?: Change[] }[] };
+type Body = { object: string; entry?: { id: string; changes?: Change[]; messaging?: MessagingEvent[] }[] };
 
 export async function POST(req: NextRequest) {
   const raw = await req.text();
@@ -33,7 +34,11 @@ export async function POST(req: NextRequest) {
   }
 
   const comments: IncomingComment[] = [];
+  const messages: { platform: "facebook" | "instagram"; accountId: string; ev: MessagingEvent }[] = [];
   for (const entry of body.entry ?? []) {
+    for (const ev of entry.messaging ?? []) {
+      if (body.object === "page" || body.object === "instagram") messages.push({ platform: body.object === "page" ? "facebook" : "instagram", accountId: entry.id, ev });
+    }
     for (const ch of entry.changes ?? []) {
       const v = ch.value ?? {};
       if (body.object === "page" && ch.field === "feed" && v.item === "comment" && v.verb === "add") {
@@ -51,7 +56,9 @@ export async function POST(req: NextRequest) {
   }
 
   // نرد دائماً بـ 200 حتى لا يعيد فيسبوك الإرسال أو يعطّل الـ Webhook؛ الأخطاء تُسجل في لوحة الإدارة
-  await Promise.all(comments.map((c) =>
-    handleIncomingComment(c).catch((e) => logEvent("error", "webhook", `comment ${c.commentId}: ${(e as Error).message}`))));
+  await Promise.all([
+    ...comments.map((c) => handleIncomingComment(c).catch((e) => logEvent("error", "webhook", `comment ${c.commentId}: ${(e as Error).message}`))),
+    ...messages.map((m) => handleMessagingEvent(m.platform, m.accountId, m.ev).catch((e) => logEvent("error", "webhook", `message: ${(e as Error).message}`))),
+  ]);
   return NextResponse.json({ ok: true });
 }

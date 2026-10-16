@@ -38,7 +38,7 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
       <div className="card mb-6 grid gap-6 md:grid-cols-2">
         <div>
           <div className="muted text-sm">الباقة الحالية</div>
-          <div className="mt-1 flex items-center gap-2 text-2xl font-extrabold">
+          <div className="mt-1 flex items-center gap-2 text-2xl font-bold">
             {user.subscriptionStatus === "trialing" ? "تجربة مجانية" : user.plan ? PLANS[user.plan as PlanId]?.name : "—"}
             <Badge tone={active ? "green" : "amber"}>{SUB_STATUS_LABEL[user.subscriptionStatus]}</Badge>
           </div>
@@ -53,7 +53,7 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
         </div>
       </div>
 
-      <h2 className="mb-3 text-lg font-extrabold">{active ? "تجديد أو ترقية الاشتراك" : "اشترك الآن"}</h2>
+      <h2 className="mb-3 text-lg font-bold">{active ? "تجديد أو ترقية الاشتراك" : "اشترك الآن"}</h2>
       <Checkout
         plans={(Object.keys(PLANS) as PlanId[]).map((id) => ({ id, name: PLANS[id].name, priceLyd: PLANS[id].priceLyd, price: PLANS[id].price, features: PLANS[id].features }))}
         durations={DURATIONS.map((d) => ({ ...d }))}
@@ -69,7 +69,7 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
 
       {payments.length > 0 && (
         <div className="card mt-6">
-          <div className="mb-3 font-extrabold">سجل المدفوعات</div>
+          <div className="mb-3 font-bold">سجل المدفوعات</div>
           <div className="table-wrap"><table className="table">
             <thead><tr><th>التاريخ</th><th>الباقة</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th><th>رقم الفاتورة</th></tr></thead>
             <tbody>
@@ -89,7 +89,7 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
       )}
 
       <form action={updateProfile} className="card mt-6 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-        <div className="font-extrabold sm:col-span-3">بيانات التواصل <span className="faint text-xs font-normal">(لنتواصل معك عند وجود مشكلة)</span></div>
+        <div className="font-bold sm:col-span-3">بيانات التواصل <span className="faint text-xs font-normal">(لنتواصل معك عند وجود مشكلة)</span></div>
         <div><label className="label">رقم الهاتف / واتساب</label><input name="phone" className="input" dir="ltr" defaultValue={user.phone ?? ""} /></div>
         <div><label className="label">البريد الإلكتروني</label><input name="email" type="email" className="input" dir="ltr" defaultValue={user.email ?? ""} /></div>
         <button className="btn-primary">حفظ</button>

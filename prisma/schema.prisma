@@ -32,8 +32,10 @@ model User {
   rules   Rule[]
   logs    ReplyLog[]
   tickets  Ticket[]
-  events   SystemEvent[]
-  payments Payment[]
+  events    SystemEvent[]
+  payments  Payment[]
+  media     Media[]
+  templates MessageTemplate[]
 }
 
 model Page {
@@ -77,12 +79,14 @@ model Rule {
   oncePerUser    Boolean  @default(true)
   delaySeconds   Int      @default(0)
   aiMode         Boolean  @default(false) // الرد بالذكاء الاصطناعي بدل الردود الثابتة
+  dmTemplateId   String? // رسالة تفاعلية (صور/بطاقات/أزرار) تُرسل في الخاص
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  page Page       @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  logs ReplyLog[]
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  page       Page             @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  dmTemplate MessageTemplate? @relation(fields: [dmTemplateId], references: [id], onDelete: SetNull)
+  logs       ReplyLog[]
 
   @@unique([pageId, postId])
 }
@@ -180,4 +184,32 @@ model Payment {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
+}
+
+// صور يرفعها العميل لاستخدامها في الرسائل (تُخدم عبر /api/media/:id لأن فيسبوك يحتاج رابطاً عاماً)
+model Media {
+  id        String   @id @default(cuid())
+  userId    String
+  mime      String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// رسالة تفاعلية: نصوص، صور، بطاقات منتجات بأزرار، وخيارات سريعة تنقل لرسائل أخرى
+model MessageTemplate {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  messages     String   @default("[]") // JSON: MessageItem[]
+  quickReplies String   @default("[]") // JSON: { title, templateId }[]
+  keywords     String   @default("[]") // JSON: كلمات في رسائل الزبون تُرسل هذه الرسالة تلقائياً
+  sendCount    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rules Rule[]
 }

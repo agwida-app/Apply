@@ -17,6 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       nav={[
         { href: "/dashboard", label: "الرئيسية", icon: "🏠" },
         { href: "/dashboard/rules", label: "المنشورات والردود", icon: "💬" },
+        { href: "/dashboard/messages", label: "الرسائل التفاعلية", icon: "🛍" },
         { href: "/dashboard/ai", label: "الرد الذكي", icon: "🤖" },
         { href: "/dashboard/accounts", label: "الحسابات المربوطة", icon: "🔗", badge: broken },
         { href: "/dashboard/activity", label: "سجل النشاط", icon: "📋" },

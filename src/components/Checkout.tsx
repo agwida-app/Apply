@@ -53,21 +53,21 @@ export function Checkout({ plans, durations, methods, stripeOn, bankInfo, curren
     setTimeout(() => (window.location.href = "/dashboard/billing?paid=1"), 1200);
   });
 
-  if (done) return <div className="card py-12 text-center"><div className="text-5xl">✅</div><div className="mt-3 text-xl font-extrabold">تم الدفع بنجاح</div><p className="muted mt-1">جارٍ تفعيل اشتراكك…</p></div>;
+  if (done) return <div className="card py-12 text-center"><div className="text-5xl">✅</div><div className="mt-3 text-xl font-bold">تم الدفع بنجاح</div><p className="muted mt-1">جارٍ تفعيل اشتراكك…</p></div>;
 
   return (
     <div className="grid gap-4 lg:grid-cols-5">
       <div className="space-y-4 lg:col-span-3">
         {/* الباقة */}
         <div className="card">
-          <div className="mb-3 font-extrabold">1. اختر الباقة</div>
+          <div className="mb-3 font-bold">1. اختر الباقة</div>
           <div className="grid gap-2 sm:grid-cols-3">
             {plans.map((x) => (
               <button key={x.id} type="button" onClick={() => { setPlan(x.id); resetOtp(); }}
-                className={`rounded-xl border p-3 text-start ${plan === x.id ? "border-brand-600 ring-2 ring-brand-200 dark:ring-brand-800" : ""}`}
+                className={`rounded-xl border p-3 text-start ${plan === x.id ? "border-brand-400 bg-brand-50/60 ring-4 ring-brand-100 dark:border-brand-500 dark:bg-brand-900/30 dark:ring-brand-900/40" : ""}`}
                 style={plan === x.id ? undefined : { borderColor: "var(--border)" }}>
-                <div className="font-extrabold">{x.name} {currentPlan === x.id && <span className="text-xs text-brand-600">(باقتك)</span>}</div>
-                <div className="mt-1 text-lg font-extrabold">{fmt(x.priceLyd)}<span className="muted text-xs font-medium"> / شهر</span></div>
+                <div className="font-bold">{x.name} {currentPlan === x.id && <span className="text-xs text-brand-600">(باقتك)</span>}</div>
+                <div className="mt-1 text-lg font-bold">{fmt(x.priceLyd)}<span className="muted text-xs font-medium"> / شهر</span></div>
                 <ul className="muted mt-2 space-y-0.5 text-xs">{x.features.map((f) => <li key={f}>✓ {f}</li>)}</ul>
               </button>
             ))}
@@ -75,14 +75,14 @@ export function Checkout({ plans, durations, methods, stripeOn, bankInfo, curren
         </div>
         {/* المدة */}
         <div className="card">
-          <div className="mb-3 font-extrabold">2. المدة</div>
+          <div className="mb-3 font-bold">2. المدة</div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {durations.map((x) => (
               <button key={x.months} type="button" onClick={() => { setMonths(x.months); resetOtp(); }}
-                className={`rounded-xl border p-3 text-center ${months === x.months ? "border-brand-600 bg-brand-600 text-white" : ""}`}
+                className={`rounded-xl border p-3 text-center ${months === x.months ? "chip-on" : ""}`}
                 style={months === x.months ? undefined : { borderColor: "var(--border)" }}>
-                <div className="font-extrabold">{x.months === 12 ? "سنة" : `${x.months} ${x.months === 1 ? "شهر" : "أشهر"}`}</div>
-                {x.discount > 0 && <div className={`text-xs font-bold ${months === x.months ? "" : "text-emerald-600"}`}>وفّر {Math.round(x.discount * 100)}%</div>}
+                <div className="font-bold">{x.months === 12 ? "سنة" : `${x.months} ${x.months === 1 ? "شهر" : "أشهر"}`}</div>
+                {x.discount > 0 && <div className={`text-xs font-medium text-emerald-600 dark:text-emerald-400`}>وفّر {Math.round(x.discount * 100)}%</div>}
               </button>
             ))}
           </div>
@@ -91,14 +91,14 @@ export function Checkout({ plans, durations, methods, stripeOn, bankInfo, curren
 
       {/* الدفع */}
       <div className="card lg:col-span-2 lg:self-start">
-        <div className="mb-3 font-extrabold">3. طريقة الدفع</div>
+        <div className="mb-3 font-bold">3. طريقة الدفع</div>
         <div className="grid grid-cols-2 gap-2">
           {tabs.map((t) => {
             const m = methods.find((x) => x.id === t);
             const label = m?.label ?? (t === "manual" ? "تحويل / إيداع" : "بطاقة دولية");
             return (
               <button key={t} type="button" onClick={() => { setMethod(t); resetOtp(); }}
-                className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-bold ${method === t ? "border-brand-600 ring-2 ring-brand-200 dark:ring-brand-800" : ""}`}
+                className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium ${method === t ? "border-brand-400 bg-brand-50/60 ring-4 ring-brand-100 dark:border-brand-500 dark:bg-brand-900/30 dark:ring-brand-900/40" : ""}`}
                 style={method === t ? undefined : { borderColor: "var(--border)" }}>
                 <span className="text-lg">{METHOD_ICON[t]}</span>{label}
               </button>
@@ -108,7 +108,7 @@ export function Checkout({ plans, durations, methods, stripeOn, bankInfo, curren
 
         <div className="my-4 rounded-xl p-3" style={{ background: "var(--surface-2)" }}>
           <div className="flex justify-between text-sm"><span className="muted">{p.name} × {months} {months === 1 ? "شهر" : "أشهر"}</span>{d.discount > 0 && <s className="faint">{fmt(full)}</s>}</div>
-          <div className="mt-1 flex items-baseline justify-between"><span className="font-bold">الإجمالي</span><span className="text-2xl font-extrabold">{method === "stripe" ? `$${p.price * months}` : fmt(total)}</span></div>
+          <div className="mt-1 flex items-baseline justify-between"><span className="font-bold">الإجمالي</span><span className="text-2xl font-bold">{method === "stripe" ? `$${p.price * months}` : fmt(total)}</span></div>
         </div>
 
         {demo && methods.length > 0 && !["manual", "stripe"].includes(method) && (

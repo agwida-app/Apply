@@ -26,7 +26,7 @@ export default async function AiPage() {
       </div>
       <AiTester tones={Object.entries(TONES).map(([id, t]) => ({ id, label: t.label }))} initialInfo={user.businessInfo ?? ""} initialTone={user.aiTone} saveAction={saveAiSettings} />
       <div className="card mt-4 text-sm">
-        <div className="mb-2 font-extrabold">كيف يعمل؟</div>
+        <div className="mb-2 font-bold">كيف يعمل؟</div>
         <ul className="muted list-inside list-disc space-y-1">
           <li>فعّل «الرد الذكي» من إعدادات المنشور، وسيُكتب لكل زبون رد خاص بسؤاله.</li>
           <li>لا يخترع أسعاراً أو وعوداً: إذا لم يجد الجواب في معلومات متجرك، يقول إن الفريق سيتواصل معه.</li>

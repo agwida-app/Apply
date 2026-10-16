@@ -31,7 +31,7 @@ export default async function Rules({ searchParams }: { searchParams: Promise<{ 
                   {r.enabled ? <Badge tone="green">● يعمل</Badge> : <Badge>متوقف</Badge>}
                 </div>
                 <Link href={`/dashboard/rules/${r.id}`} className="mt-3 flex-1">
-                  {r.name && <div className="font-extrabold">{r.name}</div>}
+                  {r.name && <div className="font-bold">{r.name}</div>}
                   <p className="muted line-clamp-2 text-sm">{r.postPreview || "(منشور بدون نص)"}</p>
                 </Link>
                 <div className="mt-3 flex flex-wrap gap-1.5 text-xs">

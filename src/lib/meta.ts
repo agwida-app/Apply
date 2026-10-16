@@ -112,7 +112,7 @@ export async function getManagedAccounts(userToken: string): Promise<ManagedAcco
 /** اشتراك الصفحة في Webhooks حتى تصلنا التعليقات */
 export async function subscribePage(fbPageId: string, pageToken: string) {
   if (isDemoToken(pageToken)) return;
-  await graph(`/${fbPageId}/subscribed_apps`, pageToken, { method: "POST", query: { subscribed_fields: "feed,messages" } });
+  await graph(`/${fbPageId}/subscribed_apps`, pageToken, { method: "POST", query: { subscribed_fields: "feed,messages,messaging_postbacks" } });
 }
 
 export async function unsubscribePage(fbPageId: string, pageToken: string) {
@@ -179,6 +179,15 @@ export async function replyPrivate(acc: { fbPageId: string; accessToken: string 
   if (isDemoToken(acc.accessToken)) return;
   await graph(`/${acc.fbPageId}/messages`, acc.accessToken, {
     method: "POST", body: { recipient: { comment_id: commentId }, message: { text } },
+  });
+}
+
+/** إرسال رسالة عبر Send API: لزبون (PSID/IGSID) أو كرد خاص على تعليق (comment_id) */
+export async function sendMessage(acc: { fbPageId: string; accessToken: string }, recipient: { id: string } | { comment_id: string }, message: Record<string, unknown>) {
+  if (isDemoToken(acc.accessToken)) return;
+  await graph(`/${acc.fbPageId}/messages`, acc.accessToken, {
+    method: "POST",
+    body: { recipient, message, ...("id" in recipient ? { messaging_type: "RESPONSE" } : {}) },
   });
 }
 

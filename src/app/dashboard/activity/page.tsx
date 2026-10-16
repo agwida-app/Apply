@@ -23,7 +23,7 @@ export default async function Activity({ searchParams }: { searchParams: Promise
       <PageHeader title="سجل النشاط" desc="كل تعليق وصل وما الذي حدث معه" />
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map(([v, l]) => (
-          <Link key={v} href={href({ status: v })} className={`rounded-full px-4 py-1.5 text-sm font-bold ${status === v ? "bg-brand-600 text-white" : "border"}`} style={status === v ? undefined : { borderColor: "var(--border)" }}>{l}</Link>
+          <Link key={v} href={href({ status: v })} className={`rounded-full px-4 py-1.5 text-sm font-medium ${status === v ? "chip-on border" : "border"}`} style={status === v ? undefined : { borderColor: "var(--border)" }}>{l}</Link>
         ))}
       </div>
       {logs.length === 0 ? <Empty title="لا يوجد نشاط" /> : (

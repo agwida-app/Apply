@@ -22,7 +22,7 @@ export default async function AdminLogin({ searchParams }: { searchParams: Promi
   return (
     <div className="grid min-h-screen place-items-center px-4">
       <form action={login} className="card w-full max-w-sm space-y-4 p-8">
-        <h1 className="text-center text-xl font-extrabold">لوحة الإدارة</h1>
+        <h1 className="text-center text-xl font-bold">لوحة الإدارة</h1>
         {error && <div className="rounded-xl bg-red-50 px-4 py-2 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-200">بيانات الدخول غير صحيحة</div>}
         <div><label className="label">البريد الإلكتروني</label><input name="email" type="email" required className="input" dir="ltr" /></div>
         <div><label className="label">كلمة المرور</label><input name="password" type="password" required className="input" dir="ltr" /></div>

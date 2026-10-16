@@ -39,7 +39,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
           <div className="flex items-center gap-3">
             <Avatar src={u.avatarUrl} name={u.name} size={56} />
             <div>
-              <div className="text-lg font-extrabold">{u.name}</div>
+              <div className="text-lg font-bold">{u.name}</div>
               <div className="flex flex-wrap gap-1">
                 <Badge tone={u.status === "active" ? "green" : "red"}>{u.status === "active" ? "نشط" : "موقوف"}</Badge>
                 {u.isDemo && <Badge>تجريبي</Badge>}
@@ -67,7 +67,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
 
         {/* الاشتراك */}
         <div className="card space-y-4">
-          <div className="font-extrabold">الاشتراك</div>
+          <div className="font-bold">الاشتراك</div>
           <div className="flex items-center gap-2">
             <Badge tone={hasActiveSubscription(u) ? "green" : "amber"}>{SUB_STATUS_LABEL[u.subscriptionStatus]}</Badge>
             <span className="font-bold">{u.plan ? PLANS[u.plan as PlanId]?.name : "—"}</span>
@@ -100,7 +100,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
         {/* مراسلة */}
         <form action={messageClient} className="card space-y-3">
           <input type="hidden" name="userId" value={u.id} />
-          <div className="font-extrabold">إرسال رسالة للعميل</div>
+          <div className="font-bold">إرسال رسالة للعميل</div>
           <p className="faint text-xs">تظهر في قسم الدعم لدى العميل مع إشعار.</p>
           <input name="subject" className="input" placeholder="الموضوع" />
           <textarea name="body" required rows={5} className="input" placeholder="مرحباً، لاحظنا أن…" />
@@ -117,7 +117,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="card">
-          <div className="mb-3 font-extrabold">الحسابات المربوطة</div>
+          <div className="mb-3 font-bold">الحسابات المربوطة</div>
           {u.pages.length === 0 ? <p className="muted text-sm">لا يوجد</p> : (
             <ul className="space-y-2 text-sm">
               {u.pages.map((p) => (
@@ -128,7 +128,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
               ))}
             </ul>
           )}
-          <div className="mb-3 mt-6 font-extrabold">المنشورات</div>
+          <div className="mb-3 mt-6 font-bold">المنشورات</div>
           <ul className="space-y-2 text-sm">
             {u.rules.map((r) => (
               <li key={r.id} className="flex items-center justify-between gap-2">
@@ -139,7 +139,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
           </ul>
         </div>
         <div className="card">
-          <div className="mb-3 font-extrabold">الأحداث والأخطاء</div>
+          <div className="mb-3 font-bold">الأحداث والأخطاء</div>
           <ul className="space-y-2 text-sm">
             {u.events.map((e) => (
               <li key={e.id} className="flex gap-2">
@@ -149,14 +149,14 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
             ))}
             {u.events.length === 0 && <li className="muted">لا يوجد</li>}
           </ul>
-          <div className="mb-3 mt-6 font-extrabold">رسائل الدعم</div>
+          <div className="mb-3 mt-6 font-bold">رسائل الدعم</div>
           <ul className="space-y-2 text-sm">
             {u.tickets.map((t) => (
               <li key={t.id} className="flex justify-between gap-2"><Link href={`/admin/tickets/${t.id}`} className="truncate text-brand-600 hover:underline">{t.subject}</Link><Badge tone={TICKET_STATUS[t.status]?.tone}>{TICKET_STATUS[t.status]?.label}</Badge></li>
             ))}
             {u.tickets.length === 0 && <li className="muted">لا يوجد</li>}
           </ul>
-          <div className="mb-3 mt-6 font-extrabold">المدفوعات <Link href="/admin/payments?t=all" className="text-xs text-brand-600">(الكل)</Link></div>
+          <div className="mb-3 mt-6 font-bold">المدفوعات <Link href="/admin/payments?t=all" className="text-xs text-brand-600">(الكل)</Link></div>
           <ul className="space-y-2 text-sm">
             {u.payments.map((p) => (
               <li key={p.id} className="flex justify-between gap-2">
@@ -170,7 +170,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
       </div>
 
       <div className="card mt-4">
-        <div className="mb-3 font-extrabold">آخر التعليقات</div>
+        <div className="mb-3 font-bold">آخر التعليقات</div>
         <div className="table-wrap"><table className="table">
           <thead><tr><th>الوقت</th><th>المعلّق</th><th>التعليق</th><th>الحالة</th><th></th></tr></thead>
           <tbody>

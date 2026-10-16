@@ -15,9 +15,10 @@ export default async function RuleDetail({ params, searchParams }: { params: Pro
   const rule = await db.rule.findFirst({ where: { id, userId: user.id }, include: { page: true } });
   if (!rule) notFound();
 
-  const [stats, logs] = await Promise.all([
+  const [stats, logs, templates] = await Promise.all([
     db.replyLog.groupBy({ by: ["status"], where: { ruleId: rule.id }, _count: true }),
     db.replyLog.findMany({ where: { ruleId: rule.id }, orderBy: { createdAt: "desc" }, take: 20 }),
+    db.messageTemplate.findMany({ where: { userId: user.id }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   const count = (s: string) => stats.find((x) => x.status === s)?._count ?? 0;
   const isDemo = decrypt(rule.page.accessToken).startsWith("demo:");
@@ -43,7 +44,7 @@ export default async function RuleDetail({ params, searchParams }: { params: Pro
       {isDemo && (
         <form action={simulateComment} className="card mb-4 border-2 border-dashed border-brand-300 dark:border-brand-700">
           <input type="hidden" name="id" value={rule.id} />
-          <div className="mb-3 font-extrabold">🧪 محاكاة تعليق زبون (الوضع التجريبي)</div>
+          <div className="mb-3 font-bold">🧪 محاكاة تعليق زبون (الوضع التجريبي)</div>
           <div className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
             <input name="name" className="input" placeholder="اسم الزبون" defaultValue="محمد علي" />
             <input name="text" className="input" placeholder="نص التعليق" defaultValue={parseList(rule.keywords)[0] ?? "كم السعر؟"} />
@@ -54,7 +55,7 @@ export default async function RuleDetail({ params, searchParams }: { params: Pro
       )}
 
       <div className="card mb-8">
-        <div className="mb-3 font-extrabold">آخر التعليقات على هذا المنشور</div>
+        <div className="mb-3 font-bold">آخر التعليقات على هذا المنشور</div>
         {logs.length === 0 ? <p className="muted text-sm">لم تصل تعليقات بعد. علّق على المنشور من حساب آخر لتجربة الرد.</p> : (
           <div className="table-wrap"><table className="table">
             <thead><tr><th>المعلّق</th><th>التعليق</th><th>الحالة</th><th>التفاصيل</th><th>الوقت</th></tr></thead>
@@ -79,11 +80,11 @@ export default async function RuleDetail({ params, searchParams }: { params: Pro
         )}
       </div>
 
-      <h2 className="mb-3 text-lg font-extrabold">تعديل الرد والرسالة</h2>
-      <RuleEditor pages={[]} initial={{
+      <h2 className="mb-3 text-lg font-bold">تعديل الرد والرسالة</h2>
+      <RuleEditor pages={[]} templates={templates} initial={{
         id: rule.id, pageId: rule.pageId, postId: rule.postId, postUrl: rule.postUrl, postPreview: rule.postPreview, postImage: rule.postImage,
         name: rule.name ?? "", publicReply: rule.publicReply, replyVariants: parseList(rule.replyVariants), privateReply: rule.privateReply,
-        dmMessage: rule.dmMessage ?? "", keywords: parseList(rule.keywords), oncePerUser: rule.oncePerUser, delaySeconds: rule.delaySeconds, aiMode: rule.aiMode,
+        dmMessage: rule.dmMessage ?? "", keywords: parseList(rule.keywords), oncePerUser: rule.oncePerUser, delaySeconds: rule.delaySeconds, aiMode: rule.aiMode, dmTemplateId: rule.dmTemplateId,
         pageName: rule.page.name, platform: rule.page.platform,
       }} />
 

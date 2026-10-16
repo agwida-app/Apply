@@ -30,7 +30,7 @@ export default async function Clients({ searchParams }: { searchParams: Promise<
       </form>
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map(([v, l]) => (
-          <Link key={v} href={`/admin/clients?f=${v}&q=${encodeURIComponent(q)}`} className={`rounded-full px-4 py-1.5 text-sm font-bold ${f === v ? "bg-brand-600 text-white" : "border"}`} style={f === v ? undefined : { borderColor: "var(--border)" }}>{l}</Link>
+          <Link key={v} href={`/admin/clients?f=${v}&q=${encodeURIComponent(q)}`} className={`rounded-full px-4 py-1.5 text-sm font-medium ${f === v ? "chip-on border" : "border"}`} style={f === v ? undefined : { borderColor: "var(--border)" }}>{l}</Link>
         ))}
       </div>
       <div className="card">

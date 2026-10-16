@@ -75,7 +75,7 @@ export default async function Accounts({ searchParams }: { searchParams: Promise
         </div>
       )}
 
-      <h2 className="mb-3 mt-10 text-lg font-extrabold">إضافة حساب</h2>
+      <h2 className="mb-3 mt-10 text-lg font-bold">إضافة حساب</h2>
       <div className="card mb-4 flex flex-wrap items-center gap-3">
         <PlatformIcon platform="tiktok" />
         <div className="min-w-0 flex-1">

@@ -35,7 +35,7 @@ export default async function AdminHome() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="card">
-          <div className="mb-3 font-extrabold">⚠️ يحتاج انتباهك</div>
+          <div className="mb-3 font-bold">⚠️ يحتاج انتباهك</div>
           <ul className="space-y-3 text-sm">
             {pendingPay.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-2"><span>💳 <b>{p.user.name}</b> حوّل {formatLyd(p.amount)} بانتظار التأكيد</span><TextLink href="/admin/payments">تأكيد</TextLink></li>
@@ -53,13 +53,13 @@ export default async function AdminHome() {
           </ul>
         </div>
         <div className="card">
-          <div className="mb-4 font-extrabold">الردود على مستوى المنصة (14 يوماً)</div>
+          <div className="mb-4 font-bold">الردود على مستوى المنصة (14 يوماً)</div>
           <DailyBars data={bucketByDay(chartRows, days)} />
         </div>
       </div>
 
       <div className="card mt-4">
-        <div className="mb-3 flex items-center justify-between font-extrabold">أحدث العملاء <TextLink href="/admin/clients">الكل</TextLink></div>
+        <div className="mb-3 flex items-center justify-between font-bold">أحدث العملاء <TextLink href="/admin/clients">الكل</TextLink></div>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {recentUsers.map((u) => (
             <li key={u.id}>

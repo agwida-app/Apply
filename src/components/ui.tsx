@@ -4,7 +4,7 @@ export function PageHeader({ title, desc, action }: { title: string; desc?: stri
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-extrabold">{title}</h1>
+        <h1 className="text-2xl font-bold">{title}</h1>
         {desc && <p className="muted mt-1 text-sm">{desc}</p>}
       </div>
       {action}
@@ -16,7 +16,7 @@ export function Stat({ label, value, hint }: { label: string; value: React.React
   return (
     <div className="card">
       <div className="muted text-sm">{label}</div>
-      <div className="mt-1 text-3xl font-extrabold tabular-nums">{value}</div>
+      <div className="mt-1 text-3xl font-bold tabular-nums">{value}</div>
       {hint && <div className="faint mt-1 text-xs">{hint}</div>}
     </div>
   );
