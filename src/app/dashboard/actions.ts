@@ -6,7 +6,8 @@ import { db } from "@/lib/db";
 import { decrypt, encrypt } from "@/lib/crypto";
 import { handleIncomingComment } from "@/lib/engine";
 import { logEvent } from "@/lib/events";
-import { findPostByUrl, getManagedAccounts, listPosts, MetaError, Post, subscribePage, unsubscribePage } from "@/lib/meta";
+import { getManagedAccounts, Post, subscribePage, unsubscribePage } from "@/lib/meta";
+import { classifyError, findPostFor, listPostsFor, replyMaxLength, supportsPrivateReply } from "@/lib/platforms";
 import { DURATIONS, hasActiveSubscription, limitsFor, PLANS, PlanId, priceLydFor } from "@/lib/plans";
 import { newInvoiceNo } from "@/lib/billing";
 import { requireUser } from "@/lib/session";
@@ -57,8 +58,10 @@ export async function removeAccount(form: FormData) {
   const user = await requireUser();
   const page = await db.page.findFirst({ where: { id: String(form.get("id")), userId: user.id } });
   if (!page) return;
-  const others = await db.page.count({ where: { fbPageId: page.fbPageId, id: { not: page.id } } });
-  if (!others) await unsubscribePage(page.fbPageId, decrypt(page.accessToken));
+  if (page.platform !== "tiktok") {
+    const others = await db.page.count({ where: { fbPageId: page.fbPageId, id: { not: page.id } } });
+    if (!others) await unsubscribePage(page.fbPageId, decrypt(page.accessToken));
+  }
   await db.page.delete({ where: { id: page.id } });
   revalidatePath("/dashboard", "layout");
 }
@@ -68,25 +71,28 @@ async function ownedPage(pageId: string) {
   const user = await requireUser();
   const page = await db.page.findFirst({ where: { id: pageId, userId: user.id } });
   if (!page) throw new Error("not found");
-  return { page, acc: { platform: page.platform, externalId: page.externalId, accessToken: decrypt(page.accessToken) } };
+  return page;
 }
+
+const fetchErr = (e: unknown) => (classifyError(e).auth ? "انتهت صلاحية الربط، أعد ربط الحساب." : "تعذر جلب المنشورات: " + errMsg(e));
 
 export async function fetchPosts(pageId: string): Promise<{ posts?: Post[]; error?: string }> {
   try {
-    const { acc } = await ownedPage(pageId);
-    return { posts: await listPosts(acc) };
+    return { posts: await listPostsFor(await ownedPage(pageId)) };
   } catch (e) {
-    return { error: e instanceof MetaError && e.isAuthError ? "انتهت صلاحية الربط، أعد ربط الحساب." : "تعذر جلب المنشورات: " + errMsg(e) };
+    return { error: fetchErr(e) };
   }
 }
 
 export async function findPost(pageId: string, url: string): Promise<{ post?: Post; error?: string }> {
   try {
-    const { acc } = await ownedPage(pageId);
-    const post = await findPostByUrl(acc, url);
-    return post ? { post } : { error: "لم نجد هذا المنشور في الصفحة المختارة. تأكد أن الرابط لمنشور من نفس الصفحة، أو اختره من القائمة." };
+    const page = await ownedPage(pageId);
+    const post = await findPostFor(page, url);
+    return post ? { post } : { error: page.platform === "tiktok"
+      ? "لم نجد هذا الفيديو في حسابك. الصق رابط الفيديو بالشكل tiktok.com/@اسمك/video/... أو اختره من القائمة."
+      : "لم نجد هذا المنشور في الصفحة المختارة. تأكد أن الرابط لمنشور من نفس الصفحة، أو اختره من القائمة." };
   } catch (e) {
-    return { error: "تعذر البحث: " + errMsg(e) };
+    return { error: fetchErr(e) };
   }
 }
 
@@ -104,7 +110,10 @@ export async function saveRule(input: RuleInput): Promise<{ error?: string; id?:
   if (!page) return { error: "الحساب غير موجود" };
 
   const variants = input.replyVariants.map((v) => v.trim()).filter(Boolean).slice(0, 10);
+  if (!supportsPrivateReply(page.platform)) input.privateReply = false;
   const dm = input.dmMessage.trim();
+  const max = replyMaxLength(page.platform);
+  if (variants.some((v) => [...v].length > max)) return { error: `الرد في ${page.platform === "tiktok" ? "تيك توك" : "هذه المنصة"} لا يتجاوز ${max} حرفاً.` };
   if (input.publicReply && !variants.length) return { error: "اكتب نص الرد العلني أو أوقف خيار الرد العلني." };
   if (input.privateReply && !dm) return { error: "اكتب نص الرسالة الخاصة أو أوقف خيار الرسالة الخاصة." };
   if (!input.publicReply && !input.privateReply) return { error: "فعّل الرد العلني أو الرسالة الخاصة على الأقل." };
@@ -164,7 +173,7 @@ export async function simulateComment(form: FormData) {
   if (!rule || !decrypt(rule.page.accessToken).startsWith("demo:")) return;
   const name = String(form.get("name") || "زبون تجريبي").slice(0, 60);
   await handleIncomingComment({
-    platform: rule.page.platform as "facebook" | "instagram", accountId: rule.page.externalId,
+    platform: rule.page.platform as "facebook" | "instagram" | "tiktok", accountId: rule.page.externalId,
     commentId: "sim_" + crypto.randomUUID(), postId: rule.postId, parentId: null,
     fromId: String(form.get("sameUser")) === "on" ? "sim_user_fixed" : "sim_" + crypto.randomUUID(),
     fromName: name, text: String(form.get("text") || "").slice(0, 500),

@@ -2,8 +2,8 @@ import Link from "next/link";
 import { PLANS, PlanId } from "@/lib/plans";
 
 const STEPS = [
-  { icon: "🔗", title: "اربط صفحتك", desc: "سجّل الدخول بحساب فيسبوك المرتبط بصفحتك واختر الصفحة أو حساب إنستغرام." },
-  { icon: "📌", title: "اختر المنشور", desc: "الصق رابط المنشور أو اختره من قائمة منشوراتك مباشرة." },
+  { icon: "🔗", title: "اربط صفحتك", desc: "اربط صفحة فيسبوك أو حساب إنستغرام أو تيك توك بضغطة زر." },
+  { icon: "📌", title: "اختر المنشور", desc: "الصق رابط المنشور أو الفيديو، أو اختره من القائمة مباشرة." },
   { icon: "✍️", title: "اكتب الرد والرسالة", desc: "حدد التعليق العلني والرسالة الخاصة التي تصل للزبون في الماسنجر." },
   { icon: "⚡", title: "اترك الباقي علينا", desc: "كل من يعلّق يحصل على رد فوري ورسالة خاصة على مدار الساعة." },
 ];
@@ -29,7 +29,7 @@ export default function Home() {
       </header>
 
       <section className="mx-auto max-w-4xl px-4 pb-16 pt-10 text-center sm:pt-20">
-        <span className="badge bg-brand-100 text-brand-800 dark:bg-brand-900/50 dark:text-brand-200">فيسبوك + إنستغرام</span>
+        <span className="badge bg-brand-100 text-brand-800 dark:bg-brand-900/50 dark:text-brand-200">فيسبوك + إنستغرام + تيك توك</span>
         <h1 className="mt-4 text-4xl font-extrabold leading-tight sm:text-6xl">
           كل تعليق على منشورك<br /><span className="text-brand-600">يحصل على رد فوري</span>
         </h1>

@@ -73,6 +73,7 @@ export function Alert({ tone = "amber", children }: { tone?: "amber" | "red" | "
 }
 
 export function PlatformIcon({ platform }: { platform: string }) {
+  if (platform === "tiktok") return <span title="تيك توك" className="inline-grid h-6 w-6 place-items-center rounded-md bg-black text-xs font-bold text-white ring-1 ring-white/20">♪</span>;
   return platform === "instagram"
     ? <span title="إنستغرام" className="inline-grid h-6 w-6 place-items-center rounded-md bg-gradient-to-br from-amber-400 via-pink-500 to-purple-600 text-xs font-bold text-white">IG</span>
     : <span title="فيسبوك" className="inline-grid h-6 w-6 place-items-center rounded-md bg-[#1877f2] text-xs font-bold text-white">f</span>;

@@ -37,12 +37,14 @@ model User {
 model Page {
   id          String   @id @default(cuid())
   userId      String
-  platform    String // facebook | instagram
+  platform    String // facebook | instagram | tiktok
   externalId  String // Facebook Page ID أو Instagram Business ID
   fbPageId    String // صفحة فيسبوك المرتبطة (لإنستغرام: الصفحة الأم)
   name        String
   pictureUrl  String?
-  accessToken String // Page Access Token مشفّر
+  accessToken String // توكن الوصول مشفّر
+  refreshToken   String? // تيك توك: توكن التجديد مشفّر
+  tokenExpiresAt DateTime? // تيك توك: انتهاء توكن الوصول (24 ساعة)
   active      Boolean  @default(true)
   health      String   @default("ok") // ok | error
   lastError   String?

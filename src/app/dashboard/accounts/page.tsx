@@ -11,6 +11,9 @@ const ERR: Record<string, string> = {
   taken: "هذا الحساب مربوط بعميل آخر في النظام. تواصل مع الدعم إن كان ملكك.",
   not_found: "لم نجد هذا الحساب ضمن صفحاتك. أعد تسجيل الدخول بفيسبوك ومنح الصلاحيات.",
   subscribe: "تعذر تفعيل استقبال التعليقات لهذه الصفحة. تأكد أنك مسؤول (Admin) عن الصفحة ومنحت كل الصلاحيات.",
+  tiktok_oauth: "تعذر ربط حساب تيك توك. حاول مرة أخرى.",
+  tiktok_scopes: "لم يتم منح صلاحيات قراءة التعليقات والرد عليها. أعد الربط ووافق على كل الصلاحيات.",
+  tiktok_not_configured: "ربط تيك توك غير مُعدّ بعد (TIKTOK_APP_ID).",
 };
 
 export default async function Accounts({ searchParams }: { searchParams: Promise<{ error?: string; ok?: string }> }) {
@@ -29,6 +32,7 @@ export default async function Accounts({ searchParams }: { searchParams: Promise
   }
   const linked = new Set(pages.map((p) => `${p.platform}:${p.externalId}`));
   const notLinked = available.filter((a) => !linked.has(`${a.platform}:${a.externalId}`));
+  const hasTikTok = pages.some((p) => p.platform === "tiktok");
   const active = hasActiveSubscription(user);
 
   return (
@@ -53,12 +57,15 @@ export default async function Accounts({ searchParams }: { searchParams: Promise
               </div>
               {p.health === "error" && (
                 <div className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-200">
-                  {p.lastError} <a href="/api/auth/facebook" className="font-bold underline">إعادة تسجيل الدخول بفيسبوك</a> ثم اضغط «ربط» على الحساب من القائمة بالأسفل.
+                  {p.lastError}{" "}
+                  {p.platform === "tiktok"
+                    ? <a href="/api/auth/tiktok" className="font-bold underline">إعادة ربط تيك توك</a>
+                    : <><a href="/api/auth/facebook" className="font-bold underline">إعادة تسجيل الدخول بفيسبوك</a> ثم اضغط «ربط» على الحساب من القائمة بالأسفل.</>}
                 </div>
               )}
               <div className="mt-4 flex gap-2">
                 <form action={toggleAccount}><input type="hidden" name="id" value={p.id} /><button className="btn-ghost py-2 text-xs">{p.active ? "⏸ إيقاف مؤقت" : "▶ تشغيل"}</button></form>
-                {p.health === "error" && (
+                {p.health === "error" && p.platform !== "tiktok" && (
                   <form action={connectAccount}><input type="hidden" name="platform" value={p.platform} /><input type="hidden" name="externalId" value={p.externalId} /><button className="btn-primary py-2 text-xs">↻ إعادة الربط</button></form>
                 )}
                 <form action={removeAccount} className="ms-auto"><input type="hidden" name="id" value={p.id} /><button className="py-2 text-xs font-bold text-red-600 hover:underline">فصل الحساب</button></form>
@@ -69,6 +76,17 @@ export default async function Accounts({ searchParams }: { searchParams: Promise
       )}
 
       <h2 className="mb-3 mt-10 text-lg font-extrabold">إضافة حساب</h2>
+      <div className="card mb-4 flex flex-wrap items-center gap-3">
+        <PlatformIcon platform="tiktok" />
+        <div className="min-w-0 flex-1">
+          <div className="font-bold">تيك توك</div>
+          <div className="faint text-xs">رد علني تلقائي على تعليقات فيديوهاتك. يتطلب حساب تيك توك تجاري (Business).</div>
+        </div>
+        {active
+          ? <a href="/api/auth/tiktok" className="btn-primary py-2">{hasTikTok ? "ربط حساب آخر" : "ربط تيك توك"}</a>
+          : <button disabled className="btn-primary py-2">ربط تيك توك</button>}
+      </div>
+      <div className="faint mb-2 text-sm font-bold">صفحات فيسبوك وحسابات إنستغرام</div>
       {!active && <Alert>يجب تفعيل الاشتراك قبل ربط الحسابات. <TextLink href="/dashboard/billing">الاشتراك</TextLink></Alert>}
       {fetchError ? (
         <Alert tone="red">{fetchError} <a href="/api/auth/facebook" className="font-bold underline">تسجيل الدخول بفيسبوك</a></Alert>

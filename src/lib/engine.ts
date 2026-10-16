@@ -1,13 +1,12 @@
 import { db } from "./db";
-import { decrypt } from "./crypto";
 import { logEvent } from "./events";
-import { MetaError, replyPrivate, replyPublic } from "./meta";
+import { classifyError, sendPrivateReply, sendPublicReply, supportsPrivateReply } from "./platforms";
 import { hasActiveSubscription, limitsFor } from "./plans";
 import { matchesKeywords, parseList, pick, renderTemplate } from "./text";
 
 export type IncomingComment = {
-  platform: "facebook" | "instagram";
-  accountId: string; // Page ID أو IG ID
+  platform: "facebook" | "instagram" | "tiktok";
+  accountId: string; // Page ID أو IG ID أو TikTok open_id
   commentId: string;
   postId: string;
   parentId?: string | null;
@@ -84,7 +83,6 @@ export async function processLog(id: string) {
     return;
   }
 
-  const acc = { platform: page.platform, fbPageId: page.fbPageId, accessToken: decrypt(page.accessToken) };
   const vars = { name: log.commenterName };
   const errors: string[] = [];
   let authError = false;
@@ -97,18 +95,18 @@ export async function processLog(id: string) {
       await fn();
       return "sent";
     } catch (e) {
-      const err = e instanceof MetaError ? e : new MetaError(String((e as Error)?.message ?? e));
-      errors.push(err.message);
-      if (err.isAuthError) authError = true;
-      else if (err.code === undefined || err.code === 1 || err.code === 2 || err.code === 4 || err.code === 17 || err.code === 32 || err.code === 613) retryable = true;
+      const c = classifyError(e);
+      errors.push(c.message);
+      if (c.auth) authError = true;
+      else if (c.retryable) retryable = true;
       return "failed";
     }
   };
 
   const variants = parseList(rule.replyVariants);
   const publicText = pick(variants);
-  const publicStatus = await run(rule.publicReply && !!publicText, log.publicStatus, () => replyPublic(acc, log.commentId, renderTemplate(publicText!, vars)));
-  const privateStatus = await run(rule.privateReply && !!rule.dmMessage?.trim(), log.privateStatus, () => replyPrivate(acc, log.commentId, renderTemplate(rule.dmMessage!, vars)));
+  const publicStatus = await run(rule.publicReply && !!publicText, log.publicStatus, () => sendPublicReply(page, rule.postId, log.commentId, renderTemplate(publicText!, vars)));
+  const privateStatus = await run(rule.privateReply && supportsPrivateReply(page.platform) && !!rule.dmMessage?.trim(), log.privateStatus, () => sendPrivateReply(page, log.commentId, renderTemplate(rule.dmMessage!, vars)));
 
   const sent = [publicStatus, privateStatus].filter((s) => s === "sent").length;
   const failed = [publicStatus, privateStatus].filter((s) => s === "failed").length;

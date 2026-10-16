@@ -64,6 +64,9 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
   const [searching, startSearch] = useTransition();
 
   const platform = pages.find((p) => p.id === pageId)?.platform ?? initial?.platform ?? "facebook";
+  const isTikTok = platform === "tiktok";
+  const maxLen = isTikTok ? 150 : 2000;
+  const postWord = isTikTok ? "الفيديو" : "المنشور";
 
   useEffect(() => {
     if (editing || !pageId) return;
@@ -83,7 +86,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
     const kw = keywords.split(/[,،\n]/).map((k) => k.trim()).filter(Boolean);
     const r = await saveRule({
       id: initial?.id, pageId, postId: post.id, postUrl: post.permalink, postPreview: post.text, postImage: post.image,
-      name, publicReply, replyVariants: variants, privateReply, dmMessage: dm, keywords: kw, oncePerUser, delaySeconds: delay,
+      name, publicReply, replyVariants: variants, privateReply: privateReply && !isTikTok, dmMessage: dm, keywords: kw, oncePerUser, delaySeconds: delay,
     });
     if (r.error) { setError(r.error); if (r.id) router.push(`/dashboard/rules/${r.id}`); return; }
     router.push(`/dashboard/rules/${r.id}?saved=1`);
@@ -96,7 +99,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
-        <Section n={1} title="اختر الحساب والمنشور">
+        <Section n={1} title={isTikTok ? "اختر الحساب والفيديو" : "اختر الحساب والمنشور"}>
           {editing ? (
             <div className="flex items-center gap-2 text-sm font-bold"><PlatformIcon platform={platform} /> {initial!.pageName}</div>
           ) : (
@@ -114,14 +117,14 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
                 {(["list", "url"] as const).map((m) => (
                   <button key={m} type="button" onClick={() => setMode(m)}
                     className={`rounded-lg px-4 py-1.5 text-sm font-bold ${mode === m ? "bg-[var(--surface)] shadow" : "muted"}`}>
-                    {m === "list" ? "اختيار من المنشورات" : "عن طريق الرابط"}
+                    {m === "list" ? (isTikTok ? "اختيار من الفيديوهات" : "اختيار من المنشورات") : "عن طريق الرابط"}
                   </button>
                 ))}
               </div>
               {postsErr && <p className="mt-3 text-sm text-red-600">{postsErr}</p>}
               {mode === "url" ? (
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                  <input className="input" dir="ltr" placeholder="https://facebook.com/.../posts/..." value={url} onChange={(e) => setUrl(e.target.value)} />
+                  <input className="input" dir="ltr" placeholder={isTikTok ? "https://www.tiktok.com/@user/video/..." : "https://facebook.com/.../posts/..."} value={url} onChange={(e) => setUrl(e.target.value)} />
                   <button type="button" onClick={search} disabled={!url || searching} className="btn-primary shrink-0">{searching ? "جارٍ البحث…" : "بحث"}</button>
                 </div>
               ) : (
@@ -143,7 +146,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
           )}
           {post && (
             <div className="mt-4 rounded-xl border-2 border-dashed border-brand-300 p-3 text-sm dark:border-brand-700">
-              <div className="mb-1 text-xs font-bold text-brand-600">✓ المنشور المختار</div>
+              <div className="mb-1 text-xs font-bold text-brand-600">✓ {postWord} المختار</div>
               <div className="line-clamp-3">{post.text || "(بدون نص)"}</div>
               {post.permalink && <a href={post.permalink} target="_blank" rel="noreferrer" className="faint text-xs underline" dir="ltr">{post.permalink}</a>}
             </div>
@@ -161,7 +164,10 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
               <p className="faint text-xs">أضف أكثر من صيغة ليختار النظام إحداها عشوائياً (يبدو الرد طبيعياً ويقلل احتمال اعتباره سبام). استخدم <b>{"{name}"}</b> لاسم الزبون.</p>
               {variants.map((v, i) => (
                 <div key={i} className="flex gap-2">
-                  <textarea rows={2} className="input" value={v} onChange={(e) => setVariants(variants.map((x, j) => (j === i ? e.target.value : x)))} />
+                  <div className="flex-1">
+                    <textarea rows={2} className="input" value={v} onChange={(e) => setVariants(variants.map((x, j) => (j === i ? e.target.value : x)))} />
+                    {isTikTok && <div className={`text-xs ${[...v].length > maxLen ? "font-bold text-red-600" : "faint"}`}>{[...v].length}/{maxLen}</div>}
+                  </div>
                   {variants.length > 1 && <button type="button" aria-label="حذف" onClick={() => setVariants(variants.filter((_, j) => j !== i))} className="btn-ghost px-3">✕</button>}
                 </div>
               ))}
@@ -176,6 +182,11 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
         </Section>
 
         <Section n={3} title="الرسالة الخاصة (تصل لبريد الرسائل)">
+          {isTikTok ? (
+            <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              تيك توك لا يسمح حالياً للتطبيقات بإرسال رسالة خاصة لمن يعلّق في منطقتنا. 💡 اكتب في الرد العلني ما يدفع الزبون للتواصل، مثل: «راسلنا على الخاص» أو «الرابط في البايو 👆».
+            </div>
+          ) : <>
           <Toggle on={privateReply} onChange={setPrivateReply} label={platform === "instagram" ? "إرسال رسالة في Direct" : "إرسال رسالة في ماسنجر"} />
           {privateReply && (
             <div className="mt-4 space-y-2">
@@ -189,6 +200,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
               <p className="faint text-xs">ℹ️ يسمح فيسبوك برسالة خاصة واحدة فقط لكل تعليق، وخلال 7 أيام من التعليق.</p>
             </div>
           )}
+          </>}
         </Section>
 
         <Section n={4} title="خيارات متقدمة">
@@ -228,7 +240,7 @@ export function RuleEditor({ pages, initial }: { pages: PageOpt[]; initial?: Rul
                 <div className="rounded-2xl px-3 py-2" style={{ background: "var(--surface-2)" }}><b>صفحتك</b><div className="whitespace-pre-wrap">{sample(firstVariant)}</div></div>
               </div>
             )}
-            {privateReply && dm.trim() && (
+            {!isTikTok && privateReply && dm.trim() && (
               <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
                 <div className="faint mb-2 text-xs">📩 في {platform === "instagram" ? "Direct" : "ماسنجر"}</div>
                 <div className="me-6 whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-brand-600 px-3 py-2 text-white">{sample(dm)}</div>

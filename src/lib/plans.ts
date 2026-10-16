@@ -9,7 +9,7 @@ export const PLANS: Record<PlanId, {
   },
   pro: {
     name: "الاحترافية", price: 19, priceLyd: 120, pages: 3, rules: 30, repliesPerMonth: 10000,
-    features: ["3 صفحات (فيسبوك أو إنستغرام)", "30 منشور نشط", "10,000 رد شهرياً", "كلمات مفتاحية وردود متعددة"],
+    features: ["3 حسابات (فيسبوك، إنستغرام، تيك توك)", "30 منشور نشط", "10,000 رد شهرياً", "كلمات مفتاحية وردود متعددة"],
   },
   business: {
     name: "الأعمال", price: 49, priceLyd: 300, pages: 10, rules: 200, repliesPerMonth: 100000,

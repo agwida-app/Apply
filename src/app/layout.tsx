@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ردّ — الرد التلقائي على التعليقات",
-  description: "رد تلقائي على تعليقات فيسبوك وإنستغرام ورسائل خاصة لعملائك",
+  description: "رد تلقائي على تعليقات فيسبوك وإنستغرام وتيك توك ورسائل خاصة لعملائك",
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 
